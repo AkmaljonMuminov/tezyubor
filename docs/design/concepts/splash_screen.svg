@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<rect width="1080" height="1920" fill="#18A957"/>
+<circle cx="870" cy="280" r="240" fill="#32BC70" opacity=".55"/>
+<circle cx="120" cy="1630" r="340" fill="#0E8B46" opacity=".35"/>
+<g transform="translate(365 620) scale(.68)">
+<rect width="512" height="512" rx="112" fill="#fff"/>
+<path d="M118 124h132c82 0 132 43 132 113s-50 113-132 113h-49v66h-83V124zm83 72v82h47c34 0 51-14 51-41s-17-41-51-41h-47z" fill="#18A957"/>
+</g>
+<text x="540" y="1040" text-anchor="middle" font-family="Arial,sans-serif" font-size="86" font-weight="700" fill="#fff">TEZYUBOR</text>
+<text x="540" y="1110" text-anchor="middle" font-family="Arial,sans-serif" font-size="34" fill="#E9FFF0">To‘lovlar va pul o‘tkazmalari</text>
+</svg>

@@ -1,0 +1,6 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+PyJWT>=2.8
+httpx>=0.27      # test uchun
+pytest>=8.0      # ixtiyoriy: unittest ham ishlaydi
