@@ -11,12 +11,15 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/validators.dart';
 import '../../../shared/card_picker.dart';
 import '../../../shared/confirm_sheet.dart';
-import '../../../shared/service_icon.dart';
+import '../../../shared/icon_badge.dart';
+import '../../../shared/picker_field.dart';
 import '../../../shared/test_mode_banner.dart';
+import '../../../shared/txn_tile.dart';
 import '../data/wallet_repository.dart';
 import '../domain/wallet_models.dart';
 
-/// To'lov formasiga beriladigan argumentlar. [account]/[amountTiyin] — tanlangan to'lovdan oldindan to'ldirish.
+/// To'lov formasiga beriladigan argumentlar. [account]/[amountTiyin] — oldindan to'ldirish
+/// (tanlangan to'lovdan yoki mobil bo'limdagi telefon qatoridan).
 class PayFormArgs {
   const PayFormArgs({required this.service, this.account, this.amountTiyin});
 
@@ -25,30 +28,99 @@ class PayFormArgs {
   final int? amountTiyin;
 }
 
-/// Kategoriya bo'yicha xizmatlar ro'yxati. Xizmat bo'lmasa — "Tez orada".
-class PayScreen extends StatelessWidget {
+/// Kategoriya ichidagi xizmatlar: qidiruv, (mobil uchun) telefon qatori. Xizmat bo'lmasa — "Tez orada".
+class PayScreen extends StatefulWidget {
   const PayScreen({super.key, required this.category});
 
   final PayCategory category;
 
   @override
+  State<PayScreen> createState() => _PayScreenState();
+}
+
+class _PayScreenState extends State<PayScreen> {
+  final _search = TextEditingController();
+  final _phone = TextEditingController();
+  String _query = '';
+  String? _phoneError;
+
+  bool get _isMobile => widget.category.id == 'mobile';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
+
+  bool _matches(PayService s) {
+    final q = _query.trim();
+    if (q.isEmpty) return true;
+    return searchCatalog(q).services.any((x) => x.id == s.id);
+  }
+
+  void _open(PayService s) {
+    final digits = _phone.text.replaceAll(RegExp(r'\D'), '');
+    context.push(
+      Routes.payForm,
+      extra: PayFormArgs(service: s, account: _isMobile && digits.isNotEmpty ? digits : null),
+    );
+  }
+
+  /// Operator avtomatik aniqlanmaydi (raqam ko'chirilgan bo'lishi mumkin) — foydalanuvchi tanlaydi.
+  Future<void> _payByPhone(List<PayService> services) async {
+    final digits = _phone.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != 9) {
+      setState(() => _phoneError = Strings.phoneError);
+      return;
+    }
+    setState(() => _phoneError = null);
+    final id = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(Strings.chooseOperator, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            ),
+            for (final s in services)
+              ListTile(
+                leading: IconBadge(s.icon, size: 40),
+                title: Text(s.name),
+                onTap: () => Navigator.of(ctx).pop(s.id),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (id == null || !mounted) return;
+    final s = payServiceById(id);
+    if (s != null) _open(s);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final services = servicesOf(category.id);
+    final all = servicesOf(widget.category.id);
+    final services = all.where(_matches).toList();
+
     return Scaffold(
-      appBar: AppBar(title: Text(category.name)),
+      appBar: AppBar(title: Text(widget.category.name)),
       body: SafeArea(
         child: Column(
           children: [
             const TestModeBanner(),
             Expanded(
-              child: services.isEmpty
+              child: all.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(category.icon, size: 56, color: AppColors.muted),
+                            Icon(widget.category.icon, size: 56, color: AppColors.muted),
                             const SizedBox(height: 16),
                             Text(Strings.soon, style: Theme.of(context).textTheme.titleLarge),
                             const SizedBox(height: 8),
@@ -60,13 +132,72 @@ class PayScreen extends StatelessWidget {
                   : ListView(
                       padding: const EdgeInsets.all(20),
                       children: [
+                        TextField(
+                          controller: _search,
+                          decoration: InputDecoration(
+                            hintText: Strings.searchHint,
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _query.isEmpty
+                                ? null
+                                : IconButton(
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () {
+                                      _search.clear();
+                                      setState(() => _query = '');
+                                    },
+                                  ),
+                          ),
+                          onChanged: (v) => setState(() => _query = v),
+                        ),
+                        if (_isMobile) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _phone,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(9),
+                                  ],
+                                  decoration: InputDecoration(
+                                    prefixText: '+998 ',
+                                    hintText: Strings.phoneHint,
+                                    errorText: _phoneError,
+                                  ),
+                                  onChanged: (_) => setState(() => _phoneError = null),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              SizedBox(
+                                width: 120,
+                                height: 56,
+                                child: FilledButton(
+                                  onPressed: () => _payByPhone(all),
+                                  child: const Text(Strings.pay),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        if (services.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: Center(child: Text(Strings.nothingFound)),
+                          ),
                         for (final s in services)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: ServiceIcon(s.icon, size: 48),
-                            title: Text(s.name),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: () => context.push(Routes.payForm, extra: PayFormArgs(service: s)),
+                          Card(
+                            elevation: 0,
+                            margin: const EdgeInsets.only(bottom: 10),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                              leading: IconBadge(s.icon, size: 48),
+                              title: Text(s.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                              onTap: () => _open(s),
+                            ),
                           ),
                       ],
                     ),
@@ -92,17 +223,33 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
   final _accountCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
   String? _fromId;
+  String? _regionId;
+  String? _officeCode;
   bool _saveFavorite = false;
+  String? _regionError;
+  String? _officeError;
   String? _accountError;
   String? _amountError;
   String? _error;
   bool _loading = false;
   String _key = newIdempotencyKey();
 
+  PayService get _service => widget.args.service;
+
   @override
   void initState() {
     super.initState();
-    _accountCtrl.text = widget.args.account ?? '';
+    final account = widget.args.account ?? '';
+    if (_service.regional && account.length > kOfficeCodeLength) {
+      final office = officeByCode(account.substring(0, kOfficeCodeLength));
+      if (office != null) {
+        _regionId = office.regionId;
+        _officeCode = office.code;
+        _accountCtrl.text = account.substring(kOfficeCodeLength);
+      }
+    } else if (!_service.regional) {
+      _accountCtrl.text = account;
+    }
     final amount = widget.args.amountTiyin;
     if (amount != null) _amountCtrl.text = (amount ~/ 100).toString();
   }
@@ -119,13 +266,24 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
     if (_error != null) setState(() => _error = null);
   }
 
+  /// Serverga yuboriladigan to'liq hisob raqami (regional bo'lsa ETK kodi + abonent raqami).
+  String _fullAccount() {
+    final d = _accountCtrl.text.replaceAll(RegExp(r'\D'), '');
+    return _service.regional ? '${_officeCode ?? ''}$d' : d;
+  }
+
   Future<void> _submit(List<CardInfo> cards) async {
-    final s = widget.args.service;
-    final digits = _accountCtrl.text.replaceAll(RegExp(r'\D'), '');
+    final s = _service;
+    final account = _fullAccount();
     final amount = parseAmountTiyin(_amountCtrl.text);
-    final accountOk = digits.length == s.accountDigits;
+    final regionOk = !s.regional || _regionId != null;
+    final officeOk = !s.regional || _officeCode != null;
+    final accountOk = regionOk && officeOk && s.isAccountValid(account);
+
     setState(() {
-      _accountError = accountOk ? null : Strings.accountError;
+      _regionError = regionOk ? null : Strings.regionError;
+      _officeError = officeOk ? null : Strings.officeError;
+      _accountError = (regionOk && officeOk && !accountOk) ? Strings.accountError : null;
       _amountError = amount == null ? Strings.amountError : null;
       _error = null;
     });
@@ -136,7 +294,7 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
       context,
       title: s.name,
       rows: [
-        MapEntry(s.accountLabel, digits),
+        MapEntry(s.accountLabel, account),
         MapEntry(Strings.amountLabel, formatSom(amount)),
         MapEntry(Strings.fee, formatSom(0)),
         MapEntry(Strings.total, formatSom(amount)),
@@ -149,7 +307,7 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
       final txn = await ref.read(walletRepositoryProvider).pay(
             fromCardId: fromId,
             serviceId: s.id,
-            account: digits,
+            account: account,
             amountTiyin: amount,
             idempotencyKey: _key,
           );
@@ -160,7 +318,7 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
         try {
           await ref.read(walletRepositoryProvider).addFavorite(
                 serviceId: s.id,
-                account: digits,
+                account: account,
                 amountTiyin: amount,
               );
         } catch (_) {
@@ -180,12 +338,69 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
     }
   }
 
+  void _showHistory() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => Consumer(
+        builder: (ctx, ref, _) {
+          final txns = ref.watch(transactionsProvider);
+          return SafeArea(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(ctx).height * 0.7),
+              child: txns.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, __) => const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: Text(Strings.genericError)),
+                ),
+                data: (all) {
+                  final list = all.where((t) => t.serviceId == _service.id).toList();
+                  return ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                    children: [
+                      Text(Strings.serviceHistory, style: Theme.of(ctx).textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      if (list.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(child: Text(Strings.noServiceHistory)),
+                        )
+                      else
+                        for (final t in list) TxnTile(t),
+                    ],
+                  );
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final s = widget.args.service;
+    final s = _service;
     final cardsAsync = ref.watch(cardsProvider);
+    final offices = _regionId == null ? const <ElectricityOffice>[] : officesOf(_regionId!);
+
     return Scaffold(
-      appBar: AppBar(title: Text(s.name)),
+      appBar: AppBar(
+        title: Text(s.name),
+        actions: [
+          IconButton(
+            tooltip: Strings.serviceHistory,
+            icon: const Icon(Icons.history),
+            onPressed: _showHistory,
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -199,27 +414,71 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
                   return ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
-                      const Text(Strings.fromCard),
-                      const SizedBox(height: 8),
-                      CardPicker(
-                        cards: cards,
-                        selectedId: selected,
-                        onChanged: (id) {
-                          setState(() => _fromId = id);
-                          _inputChanged();
-                        },
-                      ),
-                      const SizedBox(height: 16),
+                      if (s.regional) ...[
+                        PickerField(
+                          label: Strings.region,
+                          placeholder: Strings.regionHint,
+                          options: [for (final r in kRegions) MapEntry(r.id, r.name)],
+                          selectedKey: _regionId,
+                          errorText: _regionError,
+                          enabled: !_loading,
+                          onSelected: (id) {
+                            setState(() {
+                              if (id != _regionId) _officeCode = null; // boshqa hududning ETK si yaroqsiz
+                              _regionId = id;
+                              _regionError = null;
+                            });
+                            _inputChanged();
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        if (_regionId != null && offices.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Text(Strings.officesSoon, style: TextStyle(color: AppColors.muted)),
+                          )
+                        else
+                          PickerField(
+                            label: Strings.office,
+                            placeholder: Strings.officeHint,
+                            options: [for (final o in offices) MapEntry(o.code, o.label)],
+                            selectedKey: _officeCode,
+                            errorText: _officeError,
+                            enabled: !_loading && _regionId != null,
+                            onSelected: (code) {
+                              setState(() {
+                                _officeCode = code;
+                                _officeError = null;
+                              });
+                              _inputChanged();
+                            },
+                          ),
+                        const SizedBox(height: 12),
+                      ] else ...[
+                        const Text(Strings.fromCard),
+                        const SizedBox(height: 8),
+                        CardPicker(
+                          cards: cards,
+                          selectedId: selected,
+                          onChanged: (id) {
+                            setState(() => _fromId = id);
+                            _inputChanged();
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       TextField(
                         controller: _accountCtrl,
                         enabled: !_loading,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(s.accountDigits),
+                          LengthLimitingTextInputFormatter(s.accountMax),
                         ],
                         decoration: InputDecoration(
                           labelText: s.accountLabel,
+                          hintText: Strings.accountHint,
+                          prefixText: s.regional && _officeCode != null ? '$_officeCode  ' : null,
                           errorText: _accountError,
                         ),
                         onChanged: (_) => _inputChanged(),
@@ -239,6 +498,19 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
                         ),
                         onChanged: (_) => _inputChanged(),
                       ),
+                      if (s.regional) ...[
+                        const SizedBox(height: 16),
+                        const Text(Strings.fromCard),
+                        const SizedBox(height: 8),
+                        CardPicker(
+                          cards: cards,
+                          selectedId: selected,
+                          onChanged: (id) {
+                            setState(() => _fromId = id);
+                            _inputChanged();
+                          },
+                        ),
+                      ],
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,

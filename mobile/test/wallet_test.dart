@@ -133,7 +133,7 @@ void main() {
       expect(
         () => repo.pay(
           fromCardId: card.id,
-          serviceId: 'mobile_a',
+          serviceId: 'uzmobile',
           account: '12345',
           amountTiyin: 10000 * 100,
           idempotencyKey: 'p1',
@@ -142,7 +142,7 @@ void main() {
       );
       final txn = await repo.pay(
         fromCardId: card.id,
-        serviceId: 'mobile_a',
+        serviceId: 'uzmobile',
         account: '901234567',
         amountTiyin: 10000 * 100,
         idempotencyKey: 'p2',

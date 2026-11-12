@@ -12,7 +12,8 @@ class MockWalletRepository implements WalletRepository {
       Txn(
         id: 'seed-3',
         type: TxnType.payment,
-        title: 'Elektr energiyasi',
+        title: 'Elektroenergiya (Jismoniy shaxs)',
+        serviceId: 'electricity',
         amountTiyin: -85000 * 100,
         feeTiyin: 0,
         createdAt: now.subtract(const Duration(days: 1)),
@@ -166,7 +167,7 @@ class MockWalletRepository implements WalletRepository {
       throw const WalletException('VALIDATION_ERROR', 'Xizmat topilmadi');
     }
     final digits = account.replaceAll(RegExp(r'\D'), '');
-    if (digits.length != service.accountDigits) {
+    if (!service.isAccountValid(digits)) {
       throw WalletException('VALIDATION_ERROR', "${service.accountLabel} noto'g'ri");
     }
     _checkAmount(amountTiyin);
@@ -205,7 +206,7 @@ class MockWalletRepository implements WalletRepository {
       throw const WalletException('VALIDATION_ERROR', 'Xizmat topilmadi');
     }
     final digits = account.replaceAll(RegExp(r'\D'), '');
-    if (digits.length != service.accountDigits) {
+    if (!service.isAccountValid(digits)) {
       throw WalletException('VALIDATION_ERROR', "${service.accountLabel} noto'g'ri");
     }
     _checkAmount(amountTiyin);
@@ -216,6 +217,7 @@ class MockWalletRepository implements WalletRepository {
         id: _nextId(),
         type: TxnType.payment,
         title: service.name,
+        serviceId: service.id,
         amountTiyin: -amountTiyin,
         feeTiyin: 0,
         createdAt: _clock(),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart' show IconData, Icons;
 
-import '../../../core/assets.dart';
-
 /// `ownTransfer` — o'z kartalari orasida: jami balansni o'zgartirmaydi, tushum/xarajatga kirmaydi.
 enum TxnType { transfer, ownTransfer, payment, topUp }
 
@@ -37,10 +35,14 @@ class Txn {
     required this.feeTiyin,
     required this.createdAt,
     required this.status,
+    this.serviceId,
   });
 
   final String id;
   final TxnType type;
+
+  /// To'lov bo'lsa — qaysi xizmatga (xizmat tarixi uchun).
+  final String? serviceId;
   final String title;
 
   /// Manfiy — hisobdan yechildi, musbat — tushdi. Komissiya alohida (`feeTiyin`).
@@ -86,6 +88,71 @@ const List<PayCategory> kPayCategories = [
 
 PayCategory payCategoryById(String id) => kPayCategories.firstWhere((c) => c.id == id);
 
+/// Hudud (viloyat). Elektr ETK ro'yxati hududga bog'langan.
+class Region {
+  const Region(this.id, this.name);
+
+  final String id;
+  final String name;
+}
+
+const List<Region> kRegions = [
+  Region('tashkent', 'Toshkent'),
+  Region('tashkent_region', 'Toshkent viloyati'),
+  Region('andijan', 'Andijon'),
+  Region('bukhara', 'Buxoro'),
+  Region('jizzakh', 'Jizzax'),
+  Region('kashkadarya', 'Qashqadaryo'),
+  Region('navoi', 'Navoiy'),
+  Region('namangan', 'Namangan'),
+  Region('karakalpakstan', "Qoraqalpog'iston Respublikasi"),
+  Region('samarkand', 'Samarqand'),
+  Region('surkhandarya', 'Surxondaryo'),
+  Region('syrdarya', 'Sirdaryo'),
+  Region('fergana', "Farg'ona"),
+  Region('khorezm', 'Xorazm'),
+];
+
+/// Elektr ta'minoti tumanlari (ETK). Kod abonent hisob raqamining boshiga qo'shiladi.
+class ElectricityOffice {
+  const ElectricityOffice(this.code, this.name, this.regionId);
+
+  final String code;
+  final String name;
+  final String regionId;
+
+  String get label => '$code - $name';
+}
+
+const int kOfficeCodeLength = 5;
+
+/// TEST MA'LUMOTI: faqat Samarqand hududining bir qismi (rasmda ko'ringanicha). To'liq va rasmiy ro'yxat
+/// provayderdan olinadi; boshqa hududlar uchun ETK ro'yxati hozircha yo'q ("Tez orada" ko'rsatiladi).
+const List<ElectricityOffice> kElectricityOffices = [
+  ElectricityOffice('18203', 'Oqdaryo ETK', 'samarkand'),
+  ElectricityOffice('18206', "Bulung'ur ETK", 'samarkand'),
+  ElectricityOffice('18209', 'Jomboy ETK', 'samarkand'),
+  ElectricityOffice('18212', 'Ishtixon ETK', 'samarkand'),
+  ElectricityOffice('18214', 'Qoradaryo ETK', 'samarkand'),
+  ElectricityOffice('18215', "Kattaqo'rg'on ETK", 'samarkand'),
+  ElectricityOffice('18216', "Qo'shrabod ETK", 'samarkand'),
+  ElectricityOffice('18218', 'Narpay ETK', 'samarkand'),
+  ElectricityOffice('18224', 'Payariq ETK', 'samarkand'),
+  ElectricityOffice('18226', 'Chelek ETK', 'samarkand'),
+  ElectricityOffice('18227', "Pastdarg'om ETK", 'samarkand'),
+  ElectricityOffice('18228', 'Guzalkent ETK', 'samarkand'),
+  ElectricityOffice('18230', 'Paxtachi ETK', 'samarkand'),
+  ElectricityOffice('18233', "Do'stlik ETK", 'samarkand'),
+  ElectricityOffice('18234', 'Zarafshon ETK', 'samarkand'),
+  ElectricityOffice('18235', 'Nurobod ETK', 'samarkand'),
+];
+
+List<ElectricityOffice> officesOf(String regionId) =>
+    kElectricityOffices.where((o) => o.regionId == regionId).toList();
+
+ElectricityOffice? officeByCode(String code) =>
+    kElectricityOffices.where((o) => o.code == code).firstOrNull;
+
 class PayService {
   const PayService({
     required this.id,
@@ -93,63 +160,58 @@ class PayService {
     required this.categoryId,
     required this.icon,
     required this.accountLabel,
-    required this.accountDigits,
+    required this.accountMin,
+    required this.accountMax,
+    this.regional = false,
   });
 
   final String id;
   final String name;
   final String categoryId;
-  final String icon;
+  final IconData icon;
 
-  /// Maydon nomi: "Telefon raqami", "Hisob raqami".
+  /// Maydon nomi: "Telefon raqami", "Abonent hisob-raqami".
   final String accountLabel;
 
-  /// Hisob raqamining aniq uzunligi (telefon uchun 9 — +998 siz).
-  final int accountDigits;
+  /// Raqamlar soni oralig'i. Telefon uchun 9 (+998 siz). [regional] bo'lsa — ETK kodidan KEYINGI qism.
+  final int accountMin;
+  final int accountMax;
+
+  /// `true` — hudud va ETK tanlanadi, hisob raqami = ETK kodi + abonent raqami.
+  final bool regional;
+
+  /// Mock qoidasi. Haqiqiy qoidalarni provayder hujjati belgilaydi; server ham qayta tekshiradi.
+  bool isAccountValid(String account) {
+    final d = account.replaceAll(RegExp(r'\D'), '');
+    if (regional) {
+      if (d.length <= kOfficeCodeLength) return false;
+      if (officeByCode(d.substring(0, kOfficeCodeLength)) == null) return false;
+      final rest = d.length - kOfficeCodeLength;
+      return rest >= accountMin && rest <= accountMax;
+    }
+    return d.length >= accountMin && d.length <= accountMax;
+  }
 }
 
-/// Katalog hozircha ilova ichida (test, umumiy nomlar). Haqiqiy katalog provayder shartnomasidan keyin serverdan keladi.
+/// Katalog hozircha ilova ichida (TEST). Operator/xizmat NOMLARI ko'rsatish uchun; ular bilan haqiqiy
+/// integratsiya yo'q — shartnoma va API kalitlari kerak. Haqiqiy katalog keyin serverdan keladi.
 const List<PayService> kPayServices = [
-  PayService(
-    id: 'mobile_a',
-    name: 'Mobil aloqa A',
-    categoryId: 'mobile',
-    icon: AppAssets.icMobile,
-    accountLabel: 'Telefon raqami',
-    accountDigits: 9,
-  ),
-  PayService(
-    id: 'mobile_b',
-    name: 'Mobil aloqa B',
-    categoryId: 'mobile',
-    icon: AppAssets.icMobile,
-    accountLabel: 'Telefon raqami',
-    accountDigits: 9,
-  ),
-  PayService(
-    id: 'electricity',
-    name: 'Elektr energiyasi',
-    categoryId: 'bills',
-    icon: AppAssets.icBills,
-    accountLabel: 'Hisob raqami',
-    accountDigits: 8,
-  ),
-  PayService(
-    id: 'gas',
-    name: 'Tabiiy gaz',
-    categoryId: 'bills',
-    icon: AppAssets.icBills,
-    accountLabel: 'Hisob raqami',
-    accountDigits: 8,
-  ),
-  PayService(
-    id: 'water',
-    name: "Suv ta'minoti",
-    categoryId: 'bills',
-    icon: AppAssets.icBills,
-    accountLabel: 'Hisob raqami',
-    accountDigits: 8,
-  ),
+  // Mobil operatorlar
+  PayService(id: 'uzmobile', name: 'Uzmobile (GSM)', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'beeline', name: 'Beeline', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'ucell', name: 'Ucell', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'mobiuz', name: 'Mobiuz', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'perfectum', name: 'Perfectum', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'oq', name: 'OQ', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+  PayService(id: 'perfectum5g', name: 'Perfectum 5G SA', categoryId: 'mobile', icon: Icons.phone_android, accountLabel: 'Telefon raqami', accountMin: 9, accountMax: 9),
+
+  // Kommunal
+  PayService(id: 'electricity', name: 'Elektroenergiya (Jismoniy shaxs)', categoryId: 'bills', icon: Icons.bolt, accountLabel: 'Abonent hisob-raqami', accountMin: 6, accountMax: 12, regional: true),
+  PayService(id: 'electricity_penalty', name: 'Elektroenergiya (penya)', categoryId: 'bills', icon: Icons.bolt, accountLabel: 'Abonent hisob-raqami', accountMin: 6, accountMax: 12, regional: true),
+  PayService(id: 'electricity_legal', name: 'Elektroenergiya (Yuridik shaxs)', categoryId: 'bills', icon: Icons.bolt, accountLabel: 'Abonent hisob-raqami', accountMin: 6, accountMax: 12, regional: true),
+  PayService(id: 'gas', name: 'Gaz (Jismoniy shaxs)', categoryId: 'bills', icon: Icons.local_fire_department, accountLabel: 'Hisob raqami', accountMin: 6, accountMax: 12),
+  PayService(id: 'gas_legal', name: 'Gaz (Yuridik shaxs)', categoryId: 'bills', icon: Icons.local_fire_department, accountLabel: 'Hisob raqami', accountMin: 6, accountMax: 12),
+  PayService(id: 'water', name: "Suv ta'minoti", categoryId: 'bills', icon: Icons.water_drop, accountLabel: 'Hisob raqami', accountMin: 6, accountMax: 12),
 ];
 
 List<PayService> servicesOf(String categoryId) =>

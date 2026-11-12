@@ -6,7 +6,7 @@ import '../../../core/l10n/strings.dart';
 import '../../../core/money.dart';
 import '../../../core/router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../shared/service_icon.dart';
+import '../../../shared/icon_badge.dart';
 import '../../../shared/test_mode_banner.dart';
 import '../data/wallet_repository.dart';
 import '../domain/wallet_models.dart';
@@ -163,7 +163,7 @@ class _ServiceResultTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        leading: ServiceIcon(service.icon, size: 44),
+        leading: IconBadge(service.icon, size: 44),
         title: Text(service.name, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(payCategoryById(service.categoryId).name),
         trailing: const Icon(Icons.chevron_right),

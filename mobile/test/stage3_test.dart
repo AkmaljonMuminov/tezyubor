@@ -190,6 +190,41 @@ void catalogTests() {
       }
     });
 
+    test('operatorlar, kommunal variantlar va ETK qidiruvi', () {
+      expect(searchCatalog('beeline').services.map((x) => x.id), ['beeline']);
+      expect(searchCatalog('elektroenergiya').services.length, 3);
+      expect(searchCatalog('GAZ').services.map((x) => x.id), ['gas', 'gas_legal']);
+      expect(servicesOf('mobile').length, 7);
+    });
+
+    test('hisob raqami qoidalari: telefon va ETK (regional)', () {
+      final phone = payServiceById('ucell')!;
+      expect(phone.isAccountValid('901234567'), isTrue);
+      expect(phone.isAccountValid('90123456'), isFalse);
+      expect(phone.isAccountValid('9012345678'), isFalse);
+
+      final el = payServiceById('electricity')!;
+      expect(el.regional, isTrue);
+      expect(el.isAccountValid('18227123456'), isTrue); // 18227 (ETK) + 6 raqam
+      expect(el.isAccountValid('18227123'), isFalse); // abonent qismi qisqa
+      expect(el.isAccountValid('99999123456'), isFalse); // noma'lum ETK kodi
+      expect(el.isAccountValid('18227'), isFalse);
+
+      final gas = payServiceById('gas')!;
+      expect(gas.isAccountValid('1234567'), isTrue);
+      expect(gas.isAccountValid('12345'), isFalse);
+    });
+
+    test("ETK ro'yxati faqat o'z hududiga tegishli, kodlar noyob va 5 xonali", () {
+      expect(officesOf('samarkand').length, kElectricityOffices.length);
+      expect(officesOf('tashkent'), isEmpty);
+      expect(kElectricityOffices.map((o) => o.code).toSet().length, kElectricityOffices.length);
+      expect(kElectricityOffices.every((o) => o.code.length == kOfficeCodeLength), isTrue);
+      expect(kRegions.length, 14);
+      expect(kRegions.map((r) => r.id).toSet().length, 14);
+      expect(officeByCode('18227')!.label, "18227 - Pastdarg'om ETK");
+    });
+
     test("bo'sh so'rov — hamma kategoriya, xizmatsiz", () {
       final r = searchCatalog('  ');
       expect(r.categories.length, kPayCategories.length);
@@ -200,7 +235,7 @@ void catalogTests() {
       expect(searchCatalog("KOMMUNAL").categories.map((c) => c.id), ['bills']);
       // Telefon klaviaturasidagi tipografik apostrof (U+2019) bilan ham topiladi.
       expect(searchCatalog('to’lov').categories.map((c) => c.id), contains('bills'));
-      expect(searchCatalog('elektr').services.map((s) => s.id), ['electricity']);
+      expect(searchCatalog('jismoniy').services.map((s) => s.id), ['electricity', 'gas']);
       expect(searchCatalog('mavjud emas xyz').categories, isEmpty);
     });
   });
@@ -210,20 +245,43 @@ void catalogTests() {
     setUp(() => repo = MockWalletRepository());
 
     test("qo'shiladi, takrorlanmaydi (summa yangilanadi) va o'chadi", () async {
-      final a = await repo.addFavorite(serviceId: 'mobile_a', account: '90 123 45 67', amountTiyin: 12000 * 100);
+      final a = await repo.addFavorite(serviceId: 'uzmobile', account: '90 123 45 67', amountTiyin: 12000 * 100);
       expect(a.account, '901234567');
-      final b = await repo.addFavorite(serviceId: 'mobile_a', account: '901234567', amountTiyin: 15000 * 100);
+      final b = await repo.addFavorite(serviceId: 'uzmobile', account: '901234567', amountTiyin: 15000 * 100);
       expect(b.id, a.id);
       var list = await repo.favorites();
       expect(list.length, 1);
       expect(list.first.amountTiyin, 15000 * 100);
 
-      await repo.addFavorite(serviceId: 'electricity', account: '12345678', amountTiyin: 20000 * 100);
+      await repo.addFavorite(serviceId: 'electricity', account: '18227123456', amountTiyin: 20000 * 100);
       list = await repo.favorites();
       expect(list.first.serviceId, 'electricity'); // eng yangisi birinchi
 
       await repo.removeFavorite(a.id);
       expect((await repo.favorites()).map((f) => f.serviceId), ['electricity']);
+    });
+
+    test("elektr to'lovi: ETK kodi bilan o'tadi, noma'lum kod rad etiladi, tarixda serviceId bor", () async {
+      final card = (await repo.cards()).first;
+      final txn = await repo.pay(
+        fromCardId: card.id,
+        serviceId: 'electricity',
+        account: '18227123456',
+        amountTiyin: 20000 * 100,
+        idempotencyKey: 'e1',
+      );
+      expect(txn.serviceId, 'electricity');
+      expect((await repo.transactions()).where((t) => t.serviceId == 'electricity').length, 2); // seed + yangi
+      expect(
+        () => repo.pay(
+          fromCardId: card.id,
+          serviceId: 'electricity',
+          account: '99999123456',
+          amountTiyin: 20000 * 100,
+          idempotencyKey: 'e2',
+        ),
+        throwsA(isA<WalletException>().having((e) => e.code, 'code', 'VALIDATION_ERROR')),
+      );
     });
 
     test("noto'g'ri xizmat, hisob raqami yoki summa rad etiladi", () async {
@@ -232,11 +290,11 @@ void catalogTests() {
         throwsA(isA<WalletException>()),
       );
       expect(
-        () => repo.addFavorite(serviceId: 'mobile_a', account: '123', amountTiyin: 10000 * 100),
+        () => repo.addFavorite(serviceId: 'uzmobile', account: '123', amountTiyin: 10000 * 100),
         throwsA(isA<WalletException>()),
       );
       expect(
-        () => repo.addFavorite(serviceId: 'mobile_a', account: '901234567', amountTiyin: 1),
+        () => repo.addFavorite(serviceId: 'uzmobile', account: '901234567', amountTiyin: 1),
         throwsA(isA<WalletException>()),
       );
     });

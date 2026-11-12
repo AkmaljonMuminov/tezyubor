@@ -98,4 +98,19 @@ class Strings {
   static const nothingFound = 'Hech narsa topilmadi';
   static const removeFavoriteQ = "Tanlangan to'lovdan o'chirilsinmi?";
   static const remove = "O'chirish";
+
+  // To'lov formalari
+  static const pay = "To'lash";
+  static const phoneNumber = 'Telefon raqami';
+  static const chooseOperator = 'Operatorni tanlang';
+  static const region = 'Hudud';
+  static const regionHint = 'Hududni tanlang';
+  static const regionError = 'Hududni tanlang';
+  static const office = "Elektr ta'minoti tumani (ETK)";
+  static const officeHint = 'ETK ni tanlang';
+  static const officeError = 'ETK ni tanlang';
+  static const officesSoon = "Bu hudud uchun ETK ro'yxati tez orada qo'shiladi";
+  static const accountHint = 'Raqamni kiriting';
+  static const serviceHistory = "Xizmat bo'yicha tarix";
+  static const noServiceHistory = "Bu xizmat bo'yicha to'lovlar yo'q";
 }
