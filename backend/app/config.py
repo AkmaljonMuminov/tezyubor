@@ -1,6 +1,6 @@
 """Sozlamalar faqat muhit o'zgaruvchilaridan (.env) olinadi. Kod ichida maxfiy qiymat YO'Q."""
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .errors import ConfigError
 
@@ -20,6 +20,13 @@ class Settings:
     otp_max_per_hour: int = 5
     pin_max_failures: int = 5
     pin_lock_seconds: int = 900
+    # SMS. Productionda `none` bo'lsa ilova ishga tushmaydi. Parol repr/log'ga tushmasin (repr=False).
+    sms_provider: str = "none"                       # none | eskiz
+    sms_template: str = "Tezyubor tasdiqlash kodi: {code}"
+    sms_daily_cap: int = 500                         # bir sutkada jami yuboriladigan SMS (pul yo'qotishdan himoya)
+    eskiz_email: str = field(default="", repr=False)
+    eskiz_password: str = field(default="", repr=False)
+    eskiz_from: str = "4546"
 
     @property
     def test_mode(self) -> bool:
@@ -34,6 +41,14 @@ class Settings:
                 raise ConfigError(f"{name.upper()} kamida 32 belgi bo'lishi kerak")
         if self.jwt_secret == self.otp_secret:
             raise ConfigError("JWT_SECRET va OTP_SECRET har xil bo'lishi kerak")
+        if self.sms_provider not in ("none", "eskiz"):
+            raise ConfigError(f"SMS_PROVIDER noto'g'ri: {self.sms_provider!r}")
+        if self.sms_provider == "eskiz" and not (self.eskiz_email and self.eskiz_password):
+            raise ConfigError("SMS_PROVIDER=eskiz uchun ESKIZ_EMAIL va ESKIZ_PASSWORD kerak")
+        if "{code}" not in self.sms_template:
+            raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
+        if self.sms_daily_cap < 1:
+            raise ConfigError("SMS_DAILY_CAP kamida 1 bo'lishi kerak")
 
     @staticmethod
     def from_env(environ=None) -> "Settings":
@@ -43,8 +58,16 @@ class Settings:
                 env=environ.get("APP_ENV", "development"),
                 jwt_secret=environ["JWT_SECRET"],
                 otp_secret=environ["OTP_SECRET"],
+                sms_provider=environ.get("SMS_PROVIDER", "none"),
+                sms_template=environ.get("SMS_TEMPLATE", "Tezyubor tasdiqlash kodi: {code}"),
+                sms_daily_cap=int(environ.get("SMS_DAILY_CAP", "500")),
+                eskiz_email=environ.get("ESKIZ_EMAIL", ""),
+                eskiz_password=environ.get("ESKIZ_PASSWORD", ""),
+                eskiz_from=environ.get("ESKIZ_FROM", "4546"),
             )
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None
+        except ValueError:
+            raise ConfigError("SMS_DAILY_CAP butun son bo'lishi kerak") from None
         s.validate()
         return s

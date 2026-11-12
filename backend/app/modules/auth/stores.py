@@ -35,6 +35,7 @@ class OtpStore(Protocol):
     def delete(self, challenge_id: str) -> None: ...
     def request_times(self, phone: str) -> list[float]: ...
     def add_request(self, phone: str, ts: float) -> None: ...
+    def discard_request(self, phone: str, ts: float) -> None: ...
 
 
 class RefreshStore(Protocol):
@@ -68,6 +69,12 @@ class MemoryOtpStore:
 
     def add_request(self, phone, ts):
         self._requests.setdefault(phone, []).append(ts)
+
+    def discard_request(self, phone, ts):
+        """SMS yuborilmay qolsa, foydalanuvchi limiti behuda sarflanmasin."""
+        times = self._requests.get(phone, [])
+        if ts in times:
+            times.remove(ts)
 
 
 class MemoryRefreshStore:

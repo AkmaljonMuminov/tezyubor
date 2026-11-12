@@ -68,3 +68,10 @@ class TokenInvalid(AppError):
 class TokenReuseDetected(AppError):
     http_status = 401
     code = "TOKEN_REUSE_DETECTED"
+
+
+class SmsDeliveryError(AppError):
+    """SMS provayder xatosi (ulanish, avtorizatsiya, hisob bo'sh va h.k.). Tafsilot foydalanuvchiga ko'rsatilmaydi."""
+
+    http_status = 502
+    code = "SMS_DELIVERY_FAILED"

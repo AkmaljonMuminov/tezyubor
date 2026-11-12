@@ -6,11 +6,22 @@ import time
 from typing import Callable, Protocol
 
 from ...config import Settings
-from ...errors import OtpExpired, OtpInvalid, OtpLocked, OtpRateLimited, ValidationError
+from ...errors import (
+    OtpExpired,
+    OtpInvalid,
+    OtpLocked,
+    OtpRateLimited,
+    SmsDeliveryError,
+    ValidationError,
+)
 from .stores import OtpChallenge, OtpStore
 from .validators import normalize_phone
 
 TEST_CODE = "123456"
+
+# Hamma foydalanuvchilar uchun umumiy hisoblagich kaliti. Telefon raqami faqat raqamlardan iborat, shuning uchun to'qnashmaydi.
+_GLOBAL_KEY = "*global*"
+_DAY = 86400
 
 
 class SmsSender(Protocol):
@@ -56,7 +67,15 @@ class OtpService:
             raise OtpRateLimited(retry_after=int(self._s.otp_cooldown - (now - recent[-1])) + 1)
         if len(recent) >= self._s.otp_max_per_hour:
             raise OtpRateLimited(retry_after=int(3600 - (now - recent[0])) + 1)
+        send_sms = not self._s.test_mode
+        if send_sms:
+            # Pul yo'qotishdan himoya: bir sutkadagi jami SMS soni cheklanadi (SMS-bombing, tasodifiy raqamlar).
+            day = sorted(t for t in self._store.request_times(_GLOBAL_KEY) if now - t < _DAY)
+            if len(day) >= self._s.sms_daily_cap:
+                raise OtpRateLimited(retry_after=int(_DAY - (now - day[0])) + 1)
         self._store.add_request(phone, now)
+        if send_sms:
+            self._store.add_request(_GLOBAL_KEY, now)
 
         challenge_id = secrets.token_urlsafe(16)
         code = TEST_CODE if self._s.test_mode else f"{secrets.randbelow(10**6):06d}"
@@ -64,8 +83,17 @@ class OtpService:
             challenge_id,
             OtpChallenge(phone, self._hash(challenge_id, code), now + self._s.otp_ttl),
         )
-        if not self._s.test_mode:
-            self._sms.send(phone, f"Tezyubor tasdiqlash kodi: {code}")
+        if send_sms:
+            try:
+                self._sms.send(phone, self._s.sms_template.replace("{code}", code))
+            except Exception as e:
+                # Yuborilmadi: kod ham, limit ham behuda sarflanmasin (provayder uzilishida foydalanuvchi bloklanib qolmasin).
+                self._store.delete(challenge_id)
+                self._store.discard_request(phone, now)
+                self._store.discard_request(_GLOBAL_KEY, now)
+                if isinstance(e, SmsDeliveryError):
+                    raise
+                raise SmsDeliveryError("SMS yuborib bo'lmadi") from None
         return challenge_id
 
     def verify(self, challenge_id: str, code: str) -> str:

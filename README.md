@@ -16,7 +16,8 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Flutter: chek — to'lovdan keyin va tarixdan ochiladi, tafsilotlar (karta maskalangan), matnni nusxalash | ⚠️ Yozilgan. Test rejimida chekda "TEST CHEK — haqiqiy to'lov emas" yozuvi bor. PDF/rasm sifatida ulashish yo'q |
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — faqat auth | ⚠️ Yozilgan, backend bilan birga tekshirilmagan |
 | Flutter testlar (`validators`, `wallet`, `http_auth`) | ⚠️ Yozilgan, ishga tushirilmagan (CI'da `flutter test` ishlaydi, natijasi build'ni to'xtatmaydi) |
-| Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ 41 ta unit test o'tgan |
+| Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ unit testlar o'tgan (CI: Backend tests) |
+| Backend: SMS yuborish (Eskiz.uz) — token, qayta urinish, shablon, sutkalik limit, xatoda limitni qaytarish | ⚠️ Yozilgan, 19 ta test (soxta HTTP bilan). **Haqiqiy Eskiz hisobi bilan jonli sinalmagan** — `python3 -m app.tools.sms_check <telefon>` bilan tekshiring |
 | Backend HTTP qatlami (`router.py`, `main.py`) | ⚠️ Yozilgan, **tekshirilmagan** |
 | Backend: karta, o'tkazma, to'lov, tarix modullari | ❌ Yo'q (hamyon hozircha faqat mobil mock) |
 | Biometrika, PIN tiklash, OTP qayta yuborish, o'tkazmada PIN tasdig'i | ❌ Boshlanmagan |
@@ -39,6 +40,11 @@ cp ../.env.example ../.env     # JWT_SECRET va OTP_SECRET ni to'ldiring (kamida 
 python3 -m unittest discover -s tests -t . -v        # yoki: pytest
 export $(grep -v '^#' ../.env | xargs) && uvicorn app.main:create_app --factory --reload
 ```
+
+### SMS (Eskiz)
+`.env` da `SMS_PROVIDER=eskiz`, `ESKIZ_EMAIL`, `ESKIZ_PASSWORD`, `ESKIZ_FROM`, `SMS_TEMPLATE` (Eskiz'da tasdiqlangan matn), `SMS_DAILY_CAP` ni to'ldiring.
+Haqiqiy SMS faqat `APP_ENV=production` da yuboriladi (boshqa muhitda OTP doim `123456`). Tekshirish: `export $(grep -v '^#' ../.env | xargs) && python3 -m app.tools.sms_check 901234567`.
+Login/parol faqat serverning `.env` faylida; Git'ga, chatga yoki log'ga yozilmaydi.
 
 ## Mobil
 

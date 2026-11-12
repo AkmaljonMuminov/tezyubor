@@ -7,6 +7,7 @@ from ...errors import (
     PinInvalid,
     PinLocked,
     PinNotSet,
+    SmsDeliveryError,
     TokenInvalid,
     TokenReuseDetected,
     ValidationError,
@@ -37,7 +38,11 @@ class AuthService:
         self._clock = clock
 
     def request_otp(self, phone: str) -> str:
-        challenge_id = self._otp.request(phone)
+        try:
+            challenge_id = self._otp.request(phone)
+        except SmsDeliveryError:
+            self._audit.record("otp_sms_failed")
+            raise
         self._audit.record("otp_requested")
         return challenge_id
 

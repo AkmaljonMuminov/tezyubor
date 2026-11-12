@@ -4,9 +4,10 @@ from fastapi.responses import JSONResponse
 from .config import Settings
 from .errors import AppError, ConfigError
 from .modules.auth.audit import AuditLog
-from .modules.auth.otp import NullSmsSender, OtpService
+from .modules.auth.otp import OtpService
 from .modules.auth.router import build_router
 from .modules.auth.service import AuthService
+from .modules.auth.sms_factory import build_sms_sender
 from .modules.auth.stores import MemoryOtpStore, MemoryRefreshStore, MemoryUserStore
 from .modules.auth.tokens import TokenService
 
@@ -14,7 +15,7 @@ from .modules.auth.tokens import TokenService
 def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
     settings = settings or Settings.from_env()
     settings.validate()
-    sms = sms or NullSmsSender()
+    sms = sms or build_sms_sender(settings)
     if not settings.test_mode and not getattr(sms, "is_real", False):
         raise ConfigError("Production uchun haqiqiy SMS provayder kerak (hozircha ulanmagan)")
 
