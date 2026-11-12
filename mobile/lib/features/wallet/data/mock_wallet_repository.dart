@@ -47,6 +47,8 @@ class MockWalletRepository implements WalletRepository {
   ];
   final List<Txn> _txns = [];
   final List<Recipient> _recipients = [];
+  final List<FavoritePayment> _favorites = [];
+  int _favSeq = 0;
 
   /// Idempotency-Key -> birinchi natija. Qayta kelgan so'rov pulni qayta yechmaydi.
   final Map<String, Txn> _byKey = {};
@@ -144,6 +146,46 @@ class MockWalletRepository implements WalletRepository {
   Future<List<Recipient>> recentRecipients() async {
     await _latency();
     return List.unmodifiable(_recipients);
+  }
+
+  @override
+  Future<List<FavoritePayment>> favorites() async {
+    await _latency();
+    return List.unmodifiable(_favorites);
+  }
+
+  @override
+  Future<FavoritePayment> addFavorite({
+    required String serviceId,
+    required String account,
+    required int amountTiyin,
+  }) async {
+    await _latency();
+    final service = payServiceById(serviceId);
+    if (service == null) {
+      throw const WalletException('VALIDATION_ERROR', 'Xizmat topilmadi');
+    }
+    final digits = account.replaceAll(RegExp(r'\D'), '');
+    if (digits.length != service.accountDigits) {
+      throw WalletException('VALIDATION_ERROR', "${service.accountLabel} noto'g'ri");
+    }
+    _checkAmount(amountTiyin);
+    final old = _favorites.where((f) => f.serviceId == serviceId && f.account == digits).firstOrNull;
+    _favorites.removeWhere((f) => f.serviceId == serviceId && f.account == digits);
+    final fav = FavoritePayment(
+      id: old?.id ?? 'fav-${++_favSeq}',
+      serviceId: serviceId,
+      account: digits,
+      amountTiyin: amountTiyin,
+    );
+    _favorites.insert(0, fav);
+    return fav;
+  }
+
+  @override
+  Future<void> removeFavorite(String id) async {
+    await _latency();
+    _favorites.removeWhere((f) => f.id == id);
   }
 
   @override

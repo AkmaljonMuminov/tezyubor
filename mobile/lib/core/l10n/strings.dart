@@ -88,4 +88,14 @@ class Strings {
   static const logoutConfirm = "Ilovadan chiqasizmi? Qayta kirish uchun telefon raqami va SMS kod kerak bo'ladi";
   static const version = 'Versiya';
   static const hiddenAmount = '\u2022\u2022\u2022\u2022\u2022\u2022';
+
+  // To'lov markazi (kengaytirilgan)
+  static const searchHint = 'Qidiruv';
+  static const soon = 'Tez orada';
+  static const soonBody = "Bu bo'limdagi xizmatlar tez orada qo'shiladi";
+  static const favorites = "Tanlangan to'lovlar";
+  static const saveFavorite = "Tanlangan to'lovlarga qo'shish";
+  static const nothingFound = 'Hech narsa topilmadi';
+  static const removeFavoriteQ = "Tanlangan to'lovdan o'chirilsinmi?";
+  static const remove = "O'chirish";
 }

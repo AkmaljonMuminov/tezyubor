@@ -1,11 +1,11 @@
+import 'package:flutter/material.dart' show IconData, Icons;
+
 import '../../../core/assets.dart';
 
 /// `ownTransfer` — o'z kartalari orasida: jami balansni o'zgartirmaydi, tushum/xarajatga kirmaydi.
 enum TxnType { transfer, ownTransfer, payment, topUp }
 
 enum TxnStatus { succeeded, failed }
-
-enum ServiceCategory { mobile, bills }
 
 class CardInfo {
   const CardInfo({
@@ -52,11 +52,45 @@ class Txn {
   int get totalTiyin => amountTiyin - feeTiyin;
 }
 
+/// To'lov kategoriyasi. Xizmatlari bo'lmasa ekranda "Tez orada" ko'rsatiladi (soxta xizmat qo'shilmaydi).
+class PayCategory {
+  const PayCategory({required this.id, required this.name, required this.icon});
+
+  final String id;
+  final String name;
+  final IconData icon;
+}
+
+const List<PayCategory> kPayCategories = [
+  PayCategory(id: 'mobile', name: 'Mobil operatorlar', icon: Icons.signal_cellular_alt),
+  PayCategory(id: 'gov', name: 'Davlat xizmatlari va DYHXX (GAI)', icon: Icons.account_balance),
+  PayCategory(id: 'bills', name: "Kommunal to'lovlar", icon: Icons.bolt),
+  PayCategory(id: 'microcredit', name: "Mikrokredit va muddatli to'lovlar", icon: Icons.percent),
+  PayCategory(id: 'bankloans', name: "Bank kreditlarini so'ndirish", icon: Icons.credit_score),
+  PayCategory(id: 'isp', name: 'Internet provayderlar', icon: Icons.wifi),
+  PayCategory(id: 'taxes', name: 'Soliqlar', icon: Icons.request_quote),
+  PayCategory(id: 'webservices', name: 'Internet xizmatlar', icon: Icons.language),
+  PayCategory(id: 'tv', name: 'Televidenie', icon: Icons.tv),
+  PayCategory(id: 'hosting', name: 'Xosting va domenlar', icon: Icons.cloud),
+  PayCategory(id: 'telephony', name: 'Telefoniya', icon: Icons.phone),
+  PayCategory(id: 'leisure', name: "Ko'ngil ochar va dam olish", icon: Icons.sports_esports),
+  PayCategory(id: 'insurance', name: "Sug'urta", icon: Icons.verified_user),
+  PayCategory(id: 'charity', name: 'Xayriya', icon: Icons.favorite),
+  PayCategory(id: 'education', name: "Ta'lim", icon: Icons.menu_book),
+  PayCategory(id: 'health', name: "Sog'liq", icon: Icons.medical_services),
+  PayCategory(id: 'transport', name: 'Transport va avtoturargoh', icon: Icons.directions_bus),
+  PayCategory(id: 'taxi', name: 'Taksi', icon: Icons.local_taxi),
+  PayCategory(id: 'realestate', name: "Ko'chmas mulk", icon: Icons.apartment),
+  PayCategory(id: 'account', name: "Hisob raqamiga to'lov", icon: Icons.description),
+];
+
+PayCategory payCategoryById(String id) => kPayCategories.firstWhere((c) => c.id == id);
+
 class PayService {
   const PayService({
     required this.id,
     required this.name,
-    required this.category,
+    required this.categoryId,
     required this.icon,
     required this.accountLabel,
     required this.accountDigits,
@@ -64,7 +98,7 @@ class PayService {
 
   final String id;
   final String name;
-  final ServiceCategory category;
+  final String categoryId;
   final String icon;
 
   /// Maydon nomi: "Telefon raqami", "Hisob raqami".
@@ -74,12 +108,12 @@ class PayService {
   final int accountDigits;
 }
 
-/// Katalog hozircha ilova ichida (test). Haqiqiy katalog provayder shartnomasidan keyin serverdan keladi.
+/// Katalog hozircha ilova ichida (test, umumiy nomlar). Haqiqiy katalog provayder shartnomasidan keyin serverdan keladi.
 const List<PayService> kPayServices = [
   PayService(
     id: 'mobile_a',
     name: 'Mobil aloqa A',
-    category: ServiceCategory.mobile,
+    categoryId: 'mobile',
     icon: AppAssets.icMobile,
     accountLabel: 'Telefon raqami',
     accountDigits: 9,
@@ -87,7 +121,7 @@ const List<PayService> kPayServices = [
   PayService(
     id: 'mobile_b',
     name: 'Mobil aloqa B',
-    category: ServiceCategory.mobile,
+    categoryId: 'mobile',
     icon: AppAssets.icMobile,
     accountLabel: 'Telefon raqami',
     accountDigits: 9,
@@ -95,7 +129,7 @@ const List<PayService> kPayServices = [
   PayService(
     id: 'electricity',
     name: 'Elektr energiyasi',
-    category: ServiceCategory.bills,
+    categoryId: 'bills',
     icon: AppAssets.icBills,
     accountLabel: 'Hisob raqami',
     accountDigits: 8,
@@ -103,20 +137,61 @@ const List<PayService> kPayServices = [
   PayService(
     id: 'gas',
     name: 'Tabiiy gaz',
-    category: ServiceCategory.bills,
+    categoryId: 'bills',
     icon: AppAssets.icBills,
     accountLabel: 'Hisob raqami',
     accountDigits: 8,
   ),
   PayService(
     id: 'water',
-    name: 'Suv ta\'minoti',
-    category: ServiceCategory.bills,
+    name: "Suv ta'minoti",
+    categoryId: 'bills',
     icon: AppAssets.icBills,
     accountLabel: 'Hisob raqami',
     accountDigits: 8,
   ),
 ];
+
+List<PayService> servicesOf(String categoryId) =>
+    kPayServices.where((s) => s.categoryId == categoryId).toList();
+
+PayService? payServiceById(String id) => kPayServices.where((s) => s.id == id).firstOrNull;
+
+String _norm(String s) =>
+    s.toLowerCase().replaceAll(RegExp("[\u2018\u2019\u02BB\u02BC`\u00B4]"), "'").trim();
+
+class CatalogSearchResult {
+  const CatalogSearchResult({required this.categories, required this.services});
+
+  final List<PayCategory> categories;
+  final List<PayService> services;
+}
+
+/// Kategoriya va xizmat nomi bo'yicha qidiruv (katta-kichik harf va apostrof turlariga e'tiborsiz).
+/// Bo'sh so'rov — hamma kategoriyalar, xizmatlarsiz.
+CatalogSearchResult searchCatalog(String query) {
+  final q = _norm(query);
+  if (q.isEmpty) return const CatalogSearchResult(categories: kPayCategories, services: []);
+  return CatalogSearchResult(
+    categories: kPayCategories.where((c) => _norm(c.name).contains(q)).toList(),
+    services: kPayServices.where((s) => _norm(s.name).contains(q)).toList(),
+  );
+}
+
+/// Tanlangan (saqlangan) to'lov shabloni: xizmat + hisob raqami + oxirgi summa.
+class FavoritePayment {
+  const FavoritePayment({
+    required this.id,
+    required this.serviceId,
+    required this.account,
+    required this.amountTiyin,
+  });
+
+  final String id;
+  final String serviceId;
+  final String account;
+  final int amountTiyin;
+}
 
 /// Komissiya: o'tkazmada 0,5% (yuqoriga yaxlitlanadi), to'lovda yo'q.
 /// Ko'rsatish uchun; haqiqiy komissiyani SERVER hisoblaydi va qayta tekshiradi.

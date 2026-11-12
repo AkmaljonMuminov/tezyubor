@@ -90,11 +90,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: Routes.transferOwn, builder: (_, __) => const OwnTransferScreen()),
       GoRoute(
         path: Routes.pay,
-        builder: (_, state) => PayScreen(category: state.extra! as ServiceCategory),
+        builder: (_, state) => PayScreen(category: state.extra! as PayCategory),
       ),
       GoRoute(
         path: Routes.payForm,
-        builder: (_, state) => PayFormScreen(service: state.extra! as PayService),
+        builder: (_, state) => PayFormScreen(args: state.extra! as PayFormArgs),
       ),
       GoRoute(
         path: Routes.result,

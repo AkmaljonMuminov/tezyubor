@@ -148,9 +148,9 @@ class _QuickActions extends StatelessWidget {
       children: [
         _Action(AppAssets.icTransfer, Strings.actionTransfer, () => context.push(Routes.transfer)),
         _Action(AppAssets.icMobile, Strings.actionMobile,
-            () => context.push(Routes.pay, extra: ServiceCategory.mobile)),
+            () => context.push(Routes.pay, extra: payCategoryById('mobile'))),
         _Action(AppAssets.icBills, Strings.actionBills,
-            () => context.push(Routes.pay, extra: ServiceCategory.bills)),
+            () => context.push(Routes.pay, extra: payCategoryById('bills'))),
         _Action(AppAssets.icHistory, Strings.actionHistory, () => context.go(Routes.monitoring)),
       ],
     );

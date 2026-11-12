@@ -7,6 +7,7 @@ import '../../../core/ids.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/money.dart';
 import '../../../core/router.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/validators.dart';
 import '../../../shared/card_picker.dart';
 import '../../../shared/confirm_sheet.dart';
@@ -15,37 +16,60 @@ import '../../../shared/test_mode_banner.dart';
 import '../data/wallet_repository.dart';
 import '../domain/wallet_models.dart';
 
-/// Kategoriya bo'yicha xizmatlar ro'yxati.
+/// To'lov formasiga beriladigan argumentlar. [account]/[amountTiyin] — tanlangan to'lovdan oldindan to'ldirish.
+class PayFormArgs {
+  const PayFormArgs({required this.service, this.account, this.amountTiyin});
+
+  final PayService service;
+  final String? account;
+  final int? amountTiyin;
+}
+
+/// Kategoriya bo'yicha xizmatlar ro'yxati. Xizmat bo'lmasa — "Tez orada".
 class PayScreen extends StatelessWidget {
   const PayScreen({super.key, required this.category});
 
-  final ServiceCategory category;
+  final PayCategory category;
 
   @override
   Widget build(BuildContext context) {
-    final services = kPayServices.where((s) => s.category == category).toList();
+    final services = servicesOf(category.id);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(category == ServiceCategory.mobile ? Strings.payMobileTitle : Strings.payBillsTitle),
-      ),
+      appBar: AppBar(title: Text(category.name)),
       body: SafeArea(
         child: Column(
           children: [
             const TestModeBanner(),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(20),
-                children: [
-                  for (final s in services)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: ServiceIcon(s.icon, size: 48),
-                      title: Text(s.name),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push(Routes.payForm, extra: s),
+              child: services.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(category.icon, size: 56, color: AppColors.muted),
+                            const SizedBox(height: 16),
+                            Text(Strings.soon, style: Theme.of(context).textTheme.titleLarge),
+                            const SizedBox(height: 8),
+                            const Text(Strings.soonBody, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        for (final s in services)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: ServiceIcon(s.icon, size: 48),
+                            title: Text(s.name),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => context.push(Routes.payForm, extra: PayFormArgs(service: s)),
+                          ),
+                      ],
                     ),
-                ],
-              ),
             ),
           ],
         ),
@@ -56,9 +80,9 @@ class PayScreen extends StatelessWidget {
 
 /// Tanlangan xizmat uchun to'lov formasi.
 class PayFormScreen extends ConsumerStatefulWidget {
-  const PayFormScreen({super.key, required this.service});
+  const PayFormScreen({super.key, required this.args});
 
-  final PayService service;
+  final PayFormArgs args;
 
   @override
   ConsumerState<PayFormScreen> createState() => _PayFormScreenState();
@@ -68,11 +92,20 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
   final _accountCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
   String? _fromId;
+  bool _saveFavorite = false;
   String? _accountError;
   String? _amountError;
   String? _error;
   bool _loading = false;
   String _key = newIdempotencyKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _accountCtrl.text = widget.args.account ?? '';
+    final amount = widget.args.amountTiyin;
+    if (amount != null) _amountCtrl.text = (amount ~/ 100).toString();
+  }
 
   @override
   void dispose() {
@@ -87,7 +120,7 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
   }
 
   Future<void> _submit(List<CardInfo> cards) async {
-    final s = widget.service;
+    final s = widget.args.service;
     final digits = _accountCtrl.text.replaceAll(RegExp(r'\D'), '');
     final amount = parseAmountTiyin(_amountCtrl.text);
     final accountOk = digits.length == s.accountDigits;
@@ -122,6 +155,20 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
           );
       ref.invalidate(cardsProvider);
       ref.invalidate(transactionsProvider);
+      if (_saveFavorite) {
+        // To'lov allaqachon bajarilgan; shablonni saqlash muvaffaqiyatsiz bo'lsa ham natijani ko'rsatamiz.
+        try {
+          await ref.read(walletRepositoryProvider).addFavorite(
+                serviceId: s.id,
+                account: digits,
+                amountTiyin: amount,
+              );
+        } catch (_) {
+          // e'tiborsiz
+        } finally {
+          ref.invalidate(favoritesProvider);
+        }
+      }
       if (!mounted) return;
       context.go(Routes.result, extra: txn);
     } on WalletException catch (e) {
@@ -135,7 +182,7 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final s = widget.service;
+    final s = widget.args.service;
     final cardsAsync = ref.watch(cardsProvider);
     return Scaffold(
       appBar: AppBar(title: Text(s.name)),
@@ -192,11 +239,18 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
                         ),
                         onChanged: (_) => _inputChanged(),
                       ),
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        value: _saveFavorite,
+                        onChanged: _loading ? null : (v) => setState(() => _saveFavorite = v ?? false),
+                        title: const Text(Strings.saveFavorite),
+                      ),
                       if (_error != null) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 4),
                         Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
                       ],
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       FilledButton(
                         onPressed: _loading ? null : () => _submit(cards),
                         child: _loading

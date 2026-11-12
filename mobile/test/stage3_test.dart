@@ -26,6 +26,8 @@ Txn _t(String id, int amount, DateTime at,
 }
 
 void main() {
+  catalogTests();
+
   group('summarizeMonth', () {
     final now = DateTime(2026, 11, 12, 10);
     final txns = [
@@ -174,6 +176,69 @@ void main() {
       expect(await tokens.readRefresh(), isNull);
       expect(await repo.hasPin(), isFalse);
       expect(await repo.maskedPhone(), isNull);
+    });
+  });
+}
+
+void catalogTests() {
+  group('katalog va qidiruv', () {
+    test("20 ta kategoriya, id'lari noyob, xizmatlar mavjud kategoriyaga tegishli", () {
+      expect(kPayCategories.length, 20);
+      expect(kPayCategories.map((c) => c.id).toSet().length, kPayCategories.length);
+      for (final s in kPayServices) {
+        expect(kPayCategories.any((c) => c.id == s.categoryId), isTrue, reason: s.id);
+      }
+    });
+
+    test("bo'sh so'rov — hamma kategoriya, xizmatsiz", () {
+      final r = searchCatalog('  ');
+      expect(r.categories.length, kPayCategories.length);
+      expect(r.services, isEmpty);
+    });
+
+    test("katta-kichik harf va apostrof turlariga e'tiborsiz", () {
+      expect(searchCatalog("KOMMUNAL").categories.map((c) => c.id), ['bills']);
+      // Telefon klaviaturasidagi tipografik apostrof (U+2019) bilan ham topiladi.
+      expect(searchCatalog('to’lov').categories.map((c) => c.id), contains('bills'));
+      expect(searchCatalog('elektr').services.map((s) => s.id), ['electricity']);
+      expect(searchCatalog('mavjud emas xyz').categories, isEmpty);
+    });
+  });
+
+  group('tanlangan to\'lovlar (mock)', () {
+    late MockWalletRepository repo;
+    setUp(() => repo = MockWalletRepository());
+
+    test("qo'shiladi, takrorlanmaydi (summa yangilanadi) va o'chadi", () async {
+      final a = await repo.addFavorite(serviceId: 'mobile_a', account: '90 123 45 67', amountTiyin: 12000 * 100);
+      expect(a.account, '901234567');
+      final b = await repo.addFavorite(serviceId: 'mobile_a', account: '901234567', amountTiyin: 15000 * 100);
+      expect(b.id, a.id);
+      var list = await repo.favorites();
+      expect(list.length, 1);
+      expect(list.first.amountTiyin, 15000 * 100);
+
+      await repo.addFavorite(serviceId: 'electricity', account: '12345678', amountTiyin: 20000 * 100);
+      list = await repo.favorites();
+      expect(list.first.serviceId, 'electricity'); // eng yangisi birinchi
+
+      await repo.removeFavorite(a.id);
+      expect((await repo.favorites()).map((f) => f.serviceId), ['electricity']);
+    });
+
+    test("noto'g'ri xizmat, hisob raqami yoki summa rad etiladi", () async {
+      expect(
+        () => repo.addFavorite(serviceId: 'yo\'q', account: '901234567', amountTiyin: 10000 * 100),
+        throwsA(isA<WalletException>()),
+      );
+      expect(
+        () => repo.addFavorite(serviceId: 'mobile_a', account: '123', amountTiyin: 10000 * 100),
+        throwsA(isA<WalletException>()),
+      );
+      expect(
+        () => repo.addFavorite(serviceId: 'mobile_a', account: '901234567', amountTiyin: 1),
+        throwsA(isA<WalletException>()),
+      );
     });
   });
 }

@@ -40,6 +40,18 @@ abstract class WalletRepository {
   /// Oldin o'tkazma qilingan qabul qiluvchilar, eng yangisi birinchi.
   Future<List<Recipient>> recentRecipients();
 
+  /// Tanlangan to'lovlar (shablonlar), eng yangisi birinchi.
+  Future<List<FavoritePayment>> favorites();
+
+  /// Bir xil xizmat + hisob raqami bo'lsa yangi qator qo'shilmaydi, summa yangilanadi.
+  Future<FavoritePayment> addFavorite({
+    required String serviceId,
+    required String account,
+    required int amountTiyin,
+  });
+
+  Future<void> removeFavorite(String id);
+
   Future<Txn> pay({
     required String fromCardId,
     required String serviceId,
@@ -64,6 +76,10 @@ final cardsProvider = FutureProvider<List<CardInfo>>(
 
 final recipientsProvider = FutureProvider<List<Recipient>>(
   (ref) => ref.watch(walletRepositoryProvider).recentRecipients(),
+);
+
+final favoritesProvider = FutureProvider<List<FavoritePayment>>(
+  (ref) => ref.watch(walletRepositoryProvider).favorites(),
 );
 
 final transactionsProvider = FutureProvider<List<Txn>>(
