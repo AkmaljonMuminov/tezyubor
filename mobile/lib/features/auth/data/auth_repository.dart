@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/brand.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/token_store.dart';
+import 'http_auth_repository.dart';
 import 'mock_auth_repository.dart';
 
 class AuthException implements Exception {
@@ -12,8 +15,8 @@ class AuthException implements Exception {
   String toString() => 'AuthException($code)';
 }
 
-/// Autentifikatsiya shartnomasi. Hozir faqat `MockAuthRepository` bor;
-/// 2-bosqichda backend (`/v1/auth/*`) bilan ishlovchi HTTP implementatsiya qo'shiladi.
+/// Autentifikatsiya shartnomasi. `API_MODE=mock` da `MockAuthRepository`,
+/// `API_MODE=real` da backend (`/v1/auth/*`) bilan ishlovchi `HttpAuthRepository`.
 abstract class AuthRepository {
   /// OTP so'raydi, `challengeId` qaytaradi.
   Future<String> requestOtp(String phone);
@@ -23,12 +26,12 @@ abstract class AuthRepository {
 
   Future<bool> hasPin();
   Future<void> createPin(String pin);
+
+  /// `true` — to'g'ri, `false` — noto'g'ri. Bloklangan yoki tarmoq xatosida [AuthException].
   Future<bool> verifyPin(String pin);
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (!kMockMode) {
-    throw UnimplementedError("HTTP AuthRepository hali yozilmagan (2-bosqich). API_MODE=mock ishlating.");
-  }
-  return MockAuthRepository();
+  if (kMockMode) return MockAuthRepository();
+  return HttpAuthRepository(ApiClient(baseUrl: kApiBaseUrl), SecureTokenStore());
 });

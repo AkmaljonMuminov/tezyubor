@@ -20,12 +20,24 @@ class _PinLoginScreenState extends ConsumerState<PinLoginScreen> {
   String? _error;
 
   Future<void> _onCompleted(String pin) async {
-    final ok = await ref.read(authRepositoryProvider).verifyPin(pin);
-    if (!mounted) return;
-    if (ok) {
-      context.go(Routes.home);
-    } else {
-      setState(() => _error = Strings.pinWrong);
+    try {
+      final ok = await ref.read(authRepositoryProvider).verifyPin(pin);
+      if (!mounted) return;
+      if (ok) {
+        context.go(Routes.home);
+      } else {
+        setState(() => _error = Strings.pinWrong);
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      if (e.code == 'TOKEN_INVALID' || e.code == 'TOKEN_REUSE_DETECTED') {
+        // Sessiya yaroqsiz — telefon orqali qayta kirish.
+        context.go(Routes.phone);
+      } else {
+        setState(() => _error = e.message);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = Strings.genericError);
     }
   }
 

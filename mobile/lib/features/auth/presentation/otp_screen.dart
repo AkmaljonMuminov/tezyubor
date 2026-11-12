@@ -38,8 +38,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       await ref
           .read(authRepositoryProvider)
           .verifyOtp(challengeId: widget.args.challengeId, code: code);
+      final hasPin = await ref.read(authRepositoryProvider).hasPin();
       if (!mounted) return;
-      context.go(Routes.pinCreate);
+      context.go(hasPin ? Routes.pinLogin : Routes.pinCreate);
     } on AuthException catch (e) {
       if (mounted) {
         _controller.clear();

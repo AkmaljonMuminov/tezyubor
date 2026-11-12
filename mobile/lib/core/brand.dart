@@ -8,6 +8,9 @@ class AppBrand {
 }
 
 /// `--dart-define=API_MODE=mock` (standart) — backendsiz test rejimi.
-/// Haqiqiy HTTP klient 2-bosqichda qo'shiladi; hozircha faqat `mock` ishlaydi.
+/// `--dart-define=API_MODE=real` — haqiqiy backend (hozircha faqat auth: `/v1/auth/*`).
 const String kApiMode = String.fromEnvironment('API_MODE', defaultValue: 'mock');
 const bool kMockMode = kApiMode == 'mock';
+
+/// Backend manzili. Android emulyatorda kompyuter `10.0.2.2`. Production'da FAQAT https.
+const String kApiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8000');
