@@ -5,8 +5,13 @@ import '../features/auth/presentation/otp_screen.dart';
 import '../features/auth/presentation/phone_screen.dart';
 import '../features/auth/presentation/pin_create_screen.dart';
 import '../features/auth/presentation/pin_login_screen.dart';
-import '../features/home/home_placeholder_screen.dart';
+import '../features/home/home_screen.dart';
 import '../features/splash/splash_screen.dart';
+import '../features/wallet/domain/wallet_models.dart';
+import '../features/wallet/presentation/history_screen.dart';
+import '../features/wallet/presentation/pay_screen.dart';
+import '../features/wallet/presentation/result_screen.dart';
+import '../features/wallet/presentation/transfer_screen.dart';
 
 class Routes {
   const Routes._();
@@ -16,6 +21,11 @@ class Routes {
   static const pinCreate = '/pin-create';
   static const pinLogin = '/pin';
   static const home = '/home';
+  static const history = '/history';
+  static const transfer = '/transfer';
+  static const pay = '/pay';
+  static const payForm = '/pay-form';
+  static const result = '/result';
 }
 
 /// OTP ekraniga beriladigan argumentlar.
@@ -37,7 +47,21 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: Routes.pinCreate, builder: (_, __) => const PinCreateScreen()),
       GoRoute(path: Routes.pinLogin, builder: (_, __) => const PinLoginScreen()),
-      GoRoute(path: Routes.home, builder: (_, __) => const HomePlaceholderScreen()),
+      GoRoute(path: Routes.home, builder: (_, __) => const HomeScreen()),
+      GoRoute(path: Routes.history, builder: (_, __) => const HistoryScreen()),
+      GoRoute(path: Routes.transfer, builder: (_, __) => const TransferScreen()),
+      GoRoute(
+        path: Routes.pay,
+        builder: (_, state) => PayScreen(category: state.extra! as ServiceCategory),
+      ),
+      GoRoute(
+        path: Routes.payForm,
+        builder: (_, state) => PayFormScreen(service: state.extra! as PayService),
+      ),
+      GoRoute(
+        path: Routes.result,
+        builder: (_, state) => ResultScreen(txn: state.extra! as Txn),
+      ),
     ],
   );
 });

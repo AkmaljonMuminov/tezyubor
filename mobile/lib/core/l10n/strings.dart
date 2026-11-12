@@ -15,7 +15,40 @@ class Strings {
   static const pinLoginTitle = 'PIN-kodni kiriting';
   static const pinWeak = "PIN juda oddiy (masalan 1111 yoki 1234). Boshqasini tanlang";
   static const pinMismatch = 'PIN-kodlar mos kelmadi, qaytadan urinib ko\'ring';
-  static const homePlaceholder = "Bosh sahifa hali tayyor emas (2-bosqichda yaratiladi)";
   static const pinWrong = "PIN-kod noto'g'ri";
   static const genericError = "Xatolik yuz berdi. Qayta urinib ko'ring";
+
+  // Bosh sahifa
+  static const totalBalance = 'Umumiy balans';
+  static const myCards = 'Kartalarim';
+  static const recent = "So'nggi operatsiyalar";
+  static const all = 'Hammasi';
+  static const noOperations = "Hozircha operatsiyalar yo'q";
+  static const actionTransfer = "O'tkazma";
+  static const actionMobile = 'Mobil aloqa';
+  static const actionBills = "Kommunal";
+  static const actionHistory = 'Tarix';
+  static const history = 'Operatsiyalar tarixi';
+  static const retry = 'Qayta urinish';
+
+  // O'tkazma va to'lov
+  static const transferTitle = "Kartaga o'tkazma";
+  static const payMobileTitle = "Mobil aloqa to'lovi";
+  static const payBillsTitle = "Kommunal to'lovlar";
+  static const fromCard = 'Qaysi kartadan';
+  static const toCard = 'Qabul qiluvchi karta raqami';
+  static const cardHint = '8600 XXXX XXXX XXXX';
+  static const cardError = "Karta raqami noto'g'ri (Uzcard 8600 yoki Humo 9860)";
+  static const amount = "Summa (so'm)";
+  static const amountError = "Summa 1 000 dan 10 000 000 so'mgacha bo'lishi kerak";
+  static const accountError = "Raqam noto'g'ri";
+  static const amountLabel = 'Summa';
+  static const fee = 'Komissiya';
+  static const total = 'Jami yechiladi';
+  static const confirm = 'Tasdiqlash';
+  static const cancel = 'Bekor qilish';
+  static const success = 'Muvaffaqiyatli bajarildi';
+  static const done = 'Tayyor';
+  static const operationId = 'Operatsiya raqami';
+  static const noCards = "Kartalar topilmadi";
 }
