@@ -113,4 +113,11 @@ class Strings {
   static const accountHint = 'Raqamni kiriting';
   static const serviceHistory = "Xizmat bo'yicha tarix";
   static const noServiceHistory = "Bu xizmat bo'yicha to'lovlar yo'q";
+
+  // Chek
+  static const receiptTitle = 'Chek';
+  static const copyReceipt = 'Chekni nusxalash';
+  static const receiptCopied = 'Chek nusxalandi';
+  static const operationFailed = 'Operatsiya bajarilmadi';
+  static const testReceipt = "TEST CHEK \u2014 haqiqiy to'lov emas";
 }

@@ -13,7 +13,7 @@ import '../features/wallet/presentation/monitoring_screen.dart';
 import '../features/wallet/presentation/own_transfer_screen.dart';
 import '../features/wallet/presentation/pay_hub_screen.dart';
 import '../features/wallet/presentation/pay_screen.dart';
-import '../features/wallet/presentation/result_screen.dart';
+import '../features/wallet/presentation/receipt_screen.dart';
 import '../features/wallet/presentation/transfer_screen.dart';
 import '../features/wallet/presentation/transfers_screen.dart';
 import '../shared/main_shell.dart';
@@ -39,6 +39,7 @@ class Routes {
   static const pay = '/pay';
   static const payForm = '/pay-form';
   static const result = '/result';
+  static const receipt = '/receipt';
 }
 
 /// OTP ekraniga beriladigan argumentlar.
@@ -98,7 +99,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: Routes.result,
-        builder: (_, state) => ResultScreen(txn: state.extra! as Txn),
+        builder: (_, state) => ReceiptScreen(txn: state.extra! as Txn, fresh: true),
+      ),
+      GoRoute(
+        path: Routes.receipt,
+        builder: (_, state) => ReceiptScreen(txn: state.extra! as Txn),
       ),
     ],
   );

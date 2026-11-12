@@ -372,7 +372,15 @@ class _PayFormScreenState extends ConsumerState<PayFormScreen> {
                           child: Center(child: Text(Strings.noServiceHistory)),
                         )
                       else
-                        for (final t in list) TxnTile(t),
+                        for (final t in list)
+                          TxnTile(
+                            t,
+                            // Avval oynani yopamiz, keyin chekni ochamiz.
+                            onTap: () {
+                              Navigator.of(ctx).pop();
+                              context.push(Routes.receipt, extra: t);
+                            },
+                          ),
                     ],
                   );
                 },

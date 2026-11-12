@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/assets.dart';
 import '../core/format.dart';
 import '../core/money.dart';
+import '../core/router.dart';
 import '../core/theme/app_colors.dart';
 import '../features/wallet/domain/wallet_models.dart';
 import 'service_icon.dart';
 
 class TxnTile extends StatelessWidget {
-  const TxnTile(this.txn, {super.key});
+  const TxnTile(this.txn, {super.key, this.onTap});
 
   final Txn txn;
+
+  /// Bermasa — chek ochiladi.
+  final VoidCallback? onTap;
 
   String get _icon {
     switch (txn.type) {
@@ -30,6 +35,7 @@ class TxnTile extends StatelessWidget {
     final incoming = txn.amountTiyin > 0;
     return ListTile(
       contentPadding: EdgeInsets.zero,
+      onTap: onTap ?? () => context.push(Routes.receipt, extra: txn),
       leading: ServiceIcon(_icon, size: 44),
       title: Text(txn.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(formatDateTime(txn.createdAt)),

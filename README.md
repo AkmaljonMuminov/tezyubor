@@ -13,6 +13,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Flutter: monitoring (oylik tushum/xarajat, filtr, kunlar bo'yicha), so'nggi qabul qiluvchilar, kartalar orasida o'tkazma | ⚠️ Yozilgan (mock), ishga tushirib tekshirilmagan |
 | Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Chiqish faqat qurilmadagi tokenlarni o'chiradi, serverda bekor qilish endpointi yo'q |
 | Flutter: To'lov bo'limi — qidiruv, 20 kategoriya, tanlangan to'lovlar, mobil operatorlar (telefon qatori), kommunal variantlar, elektr uchun hudud + ETK tanlash, xizmat bo'yicha tarix | ⚠️ Yozilgan (mock). Operator/xizmat nomlari faqat ko'rsatish uchun, ular bilan haqiqiy integratsiya yo'q. ETK ro'yxati faqat Samarqand uchun test ma'lumoti, qolgan hududlarda "tez orada"; boshqa kategoriyalar "Tez orada" |
+| Flutter: chek — to'lovdan keyin va tarixdan ochiladi, tafsilotlar (karta maskalangan), matnni nusxalash | ⚠️ Yozilgan. Test rejimida chekda "TEST CHEK — haqiqiy to'lov emas" yozuvi bor. PDF/rasm sifatida ulashish yo'q |
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — faqat auth | ⚠️ Yozilgan, backend bilan birga tekshirilmagan |
 | Flutter testlar (`validators`, `wallet`, `http_auth`) | ⚠️ Yozilgan, ishga tushirilmagan (CI'da `flutter test` ishlaydi, natijasi build'ni to'xtatmaydi) |
 | Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ 41 ta unit test o'tgan |

@@ -36,3 +36,9 @@ String formatTime(DateTime t) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(l.hour)}:${two(l.minute)}';
 }
+
+/// `901234567` -> `+998 90 123 45 67`. 9 xonali bo'lmasa o'zgartirmaydi.
+String formatPhone9(String digits) {
+  if (!RegExp(r'^\d{9}$').hasMatch(digits)) return digits;
+  return '+998 ${digits.substring(0, 2)} ${digits.substring(2, 5)} ${digits.substring(5, 7)} ${digits.substring(7)}';
+}

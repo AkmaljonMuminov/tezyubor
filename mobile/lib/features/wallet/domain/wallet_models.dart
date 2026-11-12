@@ -36,6 +36,9 @@ class Txn {
     required this.createdAt,
     required this.status,
     this.serviceId,
+    this.fromCard,
+    this.toCard,
+    this.account,
   });
 
   final String id;
@@ -44,6 +47,15 @@ class Txn {
   /// To'lov bo'lsa — qaysi xizmatga (xizmat tarixi uchun).
   final String? serviceId;
   final String title;
+
+  /// Chek uchun: qaysi kartadan yechildi ("Uzcard •••• 9012"). Karta raqami to'liq saqlanmaydi.
+  final String? fromCard;
+
+  /// Chek uchun: qabul qiluvchi karta (maskalangan: "8600 •••• •••• 7770" yoki o'z kartasi).
+  final String? toCard;
+
+  /// Chek uchun: to'lov qilingan hisob raqami / telefon (faqat raqamlar).
+  final String? account;
 
   /// Manfiy — hisobdan yechildi, musbat — tushdi. Komissiya alohida (`feeTiyin`).
   final int amountTiyin;

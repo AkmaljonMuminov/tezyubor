@@ -14,6 +14,8 @@ class MockWalletRepository implements WalletRepository {
         type: TxnType.payment,
         title: 'Elektroenergiya (Jismoniy shaxs)',
         serviceId: 'electricity',
+        fromCard: 'Uzcard \u2022\u2022\u2022\u2022 9012',
+        account: '18227123456',
         amountTiyin: -85000 * 100,
         feeTiyin: 0,
         createdAt: now.subtract(const Duration(days: 1)),
@@ -23,6 +25,8 @@ class MockWalletRepository implements WalletRepository {
         id: 'seed-2',
         type: TxnType.transfer,
         title: "Kartaga o'tkazma •••• 7770",
+        fromCard: 'Uzcard •••• 9012',
+        toCard: '8600 •••• •••• 7770',
         amountTiyin: -200000 * 100,
         feeTiyin: 1000 * 100,
         createdAt: now.subtract(const Duration(days: 3)),
@@ -90,7 +94,7 @@ class MockWalletRepository implements WalletRepository {
       // Mock'da faqat oxirgi 4 raqam saqlanadi, shuning uchun o'z kartasini shu bilan aniqlaymiz.
       throw const WalletException('VALIDATION_ERROR', "O'z kartangizga o'tkazib bo'lmaydi");
     }
-    _debit(fromCardId, amountTiyin + fee);
+    final from = _debit(fromCardId, amountTiyin + fee);
     _recipients.removeWhere((r) => r.cardNumber == to);
     _recipients.insert(0, Recipient(cardNumber: to));
     return _record(
@@ -99,6 +103,8 @@ class MockWalletRepository implements WalletRepository {
         id: _nextId(),
         type: TxnType.transfer,
         title: "Kartaga o'tkazma •••• ${to.substring(12)}",
+        fromCard: '${from.network} ${from.masked}',
+        toCard: '${to.substring(0, 4)} •••• •••• ${to.substring(12)}',
         amountTiyin: -amountTiyin,
         feeTiyin: fee,
         createdAt: _clock(),
@@ -135,6 +141,8 @@ class MockWalletRepository implements WalletRepository {
         id: _nextId(),
         type: TxnType.ownTransfer,
         title: 'Kartalar orasida \u2022\u2022\u2022\u2022 ${from.last4} \u2192 \u2022\u2022\u2022\u2022 ${to.last4}',
+        fromCard: '${from.network} ${from.masked}',
+        toCard: '${to.network} ${to.masked}',
         amountTiyin: -amountTiyin,
         feeTiyin: 0,
         createdAt: _clock(),
@@ -210,7 +218,7 @@ class MockWalletRepository implements WalletRepository {
       throw WalletException('VALIDATION_ERROR', "${service.accountLabel} noto'g'ri");
     }
     _checkAmount(amountTiyin);
-    _debit(fromCardId, amountTiyin);
+    final from = _debit(fromCardId, amountTiyin);
     return _record(
       idempotencyKey,
       Txn(
@@ -218,6 +226,8 @@ class MockWalletRepository implements WalletRepository {
         type: TxnType.payment,
         title: service.name,
         serviceId: service.id,
+        fromCard: '${from.network} ${from.masked}',
+        account: digits,
         amountTiyin: -amountTiyin,
         feeTiyin: 0,
         createdAt: _clock(),
