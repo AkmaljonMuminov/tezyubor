@@ -7,6 +7,7 @@ import 'wallet_repository.dart';
 class MockWalletRepository implements WalletRepository {
   MockWalletRepository({DateTime Function()? clock}) : _clock = clock ?? DateTime.now {
     final now = _clock();
+    _recipients.add(const Recipient(cardNumber: '8600555566667770'));
     _txns.addAll([
       Txn(
         id: 'seed-3',
@@ -45,6 +46,7 @@ class MockWalletRepository implements WalletRepository {
     const CardInfo(id: 'card-2', last4: '1098', network: 'Humo', balanceTiyin: 480000 * 100),
   ];
   final List<Txn> _txns = [];
+  final List<Recipient> _recipients = [];
 
   /// Idempotency-Key -> birinchi natija. Qayta kelgan so'rov pulni qayta yechmaydi.
   final Map<String, Txn> _byKey = {};
@@ -86,6 +88,8 @@ class MockWalletRepository implements WalletRepository {
       throw const WalletException('VALIDATION_ERROR', "O'z kartangizga o'tkazib bo'lmaydi");
     }
     _debit(fromCardId, amountTiyin + fee);
+    _recipients.removeWhere((r) => r.cardNumber == to);
+    _recipients.insert(0, Recipient(cardNumber: to));
     return _record(
       idempotencyKey,
       Txn(
@@ -98,6 +102,48 @@ class MockWalletRepository implements WalletRepository {
         status: TxnStatus.succeeded,
       ),
     );
+  }
+
+  @override
+  Future<Txn> transferOwn({
+    required String fromCardId,
+    required String toCardId,
+    required int amountTiyin,
+    required String idempotencyKey,
+  }) async {
+    await _latency();
+    final done = _byKey[idempotencyKey];
+    if (done != null) return done;
+
+    if (fromCardId == toCardId) {
+      throw const WalletException('VALIDATION_ERROR', "Bir xil kartani tanlab bo'lmaydi");
+    }
+    final toIndex = _cards.indexWhere((c) => c.id == toCardId);
+    if (toIndex < 0) {
+      throw const WalletException('CARD_NOT_FOUND', 'Karta topilmadi');
+    }
+    _checkAmount(amountTiyin);
+    final from = _debit(fromCardId, amountTiyin);
+    final to = _cards[toIndex];
+    _cards[toIndex] = to.withBalance(to.balanceTiyin + amountTiyin);
+    return _record(
+      idempotencyKey,
+      Txn(
+        id: _nextId(),
+        type: TxnType.ownTransfer,
+        title: 'Kartalar orasida \u2022\u2022\u2022\u2022 ${from.last4} \u2192 \u2022\u2022\u2022\u2022 ${to.last4}',
+        amountTiyin: -amountTiyin,
+        feeTiyin: 0,
+        createdAt: _clock(),
+        status: TxnStatus.succeeded,
+      ),
+    );
+  }
+
+  @override
+  Future<List<Recipient>> recentRecipients() async {
+    await _latency();
+    return List.unmodifiable(_recipients);
   }
 
   @override

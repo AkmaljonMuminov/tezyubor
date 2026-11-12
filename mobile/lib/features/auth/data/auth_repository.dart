@@ -29,6 +29,12 @@ abstract class AuthRepository {
 
   /// `true` — to'g'ri, `false` — noto'g'ri. Bloklangan yoki tarmoq xatosida [AuthException].
   Future<bool> verifyPin(String pin);
+
+  /// Oxirgi kirgan telefon (maskalangan), yo'q bo'lsa `null`.
+  Future<String?> maskedPhone();
+
+  /// Qurilmadagi sessiyani tugatadi. Serverda tokenni bekor qilish endpointi hali yo'q.
+  Future<void> logout();
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

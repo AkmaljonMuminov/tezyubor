@@ -20,6 +20,7 @@ class HttpAuthRepository implements AuthRepository {
     final res = await _call(() => _api.post('/v1/auth/otp/request', body: {'phone': normalized}));
     final id = res?['challenge_id'];
     if (id is! String) throw const AuthException('SERVER_ERROR', 'Server javobi noto\'g\'ri');
+    await _tokens.savePhone(maskPhone(normalized)); // faqat maskalangani saqlanadi
     return id;
   }
 
@@ -71,6 +72,14 @@ class HttpAuthRepository implements AuthRepository {
       throw _toAuth(e);
     }
   }
+
+  @override
+  Future<String?> maskedPhone() => _tokens.readPhone();
+
+  /// Faqat qurilmadagi tokenlarni o'chiradi. Backendda tokenni bekor qilish endpointi yo'q,
+  /// shuning uchun refresh token serverda muddati tugaguncha amal qiladi (keyingi bosqich).
+  @override
+  Future<void> logout() => _tokens.clear();
 
   // --- ichki ---
 

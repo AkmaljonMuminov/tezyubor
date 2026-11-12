@@ -15,6 +15,7 @@ class TxnTile extends StatelessWidget {
   String get _icon {
     switch (txn.type) {
       case TxnType.transfer:
+      case TxnType.ownTransfer:
         return AppAssets.icTransfer;
       case TxnType.payment:
         return AppAssets.icBills;

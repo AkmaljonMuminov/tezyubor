@@ -51,4 +51,41 @@ class Strings {
   static const done = 'Tayyor';
   static const operationId = 'Operatsiya raqami';
   static const noCards = "Kartalar topilmadi";
+
+  // Navigatsiya
+  static const navHome = 'Asosiy';
+  static const navTransfers = "O'tkazmalar";
+  static const navPay = "To'lov";
+  static const navMonitoring = 'Monitoring';
+  static const navProfile = 'Profil';
+
+  // O'tkazmalar markazi
+  static const transfersTitle = "O'tkazmalar";
+  static const transferToCard = "Kartaga o'tkazma";
+  static const transferOwnTitle = "Kartalarim orasida";
+  static const recentRecipients = "So'nggi qabul qiluvchilar";
+  static const noRecipients = "Hozircha o'tkazmalar yo'q";
+  static const needTwoCards = "Kartalar orasida o'tkazish uchun kamida 2 ta karta kerak";
+  static const fromCardOwn = 'Qaysi kartadan';
+  static const toCardOwn = 'Qaysi kartaga';
+
+  // To'lov markazi
+  static const payTitle = "To'lovlar";
+
+  // Monitoring
+  static const monitoringTitle = 'Monitoring';
+  static const incomes = 'Tushumlar';
+  static const expenses = 'Xarajatlar';
+  static const filterAll = 'Hammasi';
+  static const thisMonth = 'Shu oy';
+
+  // Profil
+  static const profileTitle = 'Profil';
+  static const hideBalance = 'Balansni yashirish';
+  static const language = 'Til';
+  static const languageValue = "O'zbek";
+  static const logout = 'Chiqish';
+  static const logoutConfirm = "Ilovadan chiqasizmi? Qayta kirish uchun telefon raqami va SMS kod kerak bo'ladi";
+  static const version = 'Versiya';
+  static const hiddenAmount = '\u2022\u2022\u2022\u2022\u2022\u2022';
 }

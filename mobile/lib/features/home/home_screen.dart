@@ -11,6 +11,7 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/service_icon.dart';
 import '../../shared/test_mode_banner.dart';
 import '../../shared/txn_tile.dart';
+import '../wallet/data/ui_state.dart';
 import '../wallet/data/wallet_repository.dart';
 import '../wallet/domain/wallet_models.dart';
 
@@ -64,7 +65,7 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Text(Strings.recent, style: Theme.of(context).textTheme.titleMedium),
                         TextButton(
-                          onPressed: () => context.push(Routes.history),
+                          onPressed: () => context.go(Routes.monitoring),
                           child: const Text(Strings.all),
                         ),
                       ],
@@ -90,32 +91,46 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _BalanceCard extends StatelessWidget {
+class _BalanceCard extends ConsumerWidget {
   const _BalanceCard({required this.cards});
 
   final AsyncValue<List<CardInfo>> cards;
 
   @override
-  Widget build(BuildContext context) {
-    final text = cards.when(
-      data: (list) => formatSom(list.fold<int>(0, (sum, c) => sum + c.balanceTiyin)),
-      loading: () => '…',
-      error: (_, __) => '—',
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hidden = ref.watch(balanceHiddenProvider);
+    final text = hidden
+        ? Strings.hiddenAmount
+        : cards.when(
+            data: (list) => formatSom(list.fold<int>(0, (sum, c) => sum + c.balanceTiyin)),
+            loading: () => '\u2026',
+            error: (_, __) => '\u2014',
+          );
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(22),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text(Strings.totalBalance, style: TextStyle(color: Color(0xFFE9FFF0))),
-          const SizedBox(height: 8),
-          Text(
-            text,
-            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(Strings.totalBalance, style: TextStyle(color: Color(0xFFE9FFF0))),
+                const SizedBox(height: 8),
+                Text(
+                  text,
+                  style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: Strings.hideBalance,
+            onPressed: () => ref.read(balanceHiddenProvider.notifier).state = !hidden,
+            icon: Icon(hidden ? Icons.visibility_off : Icons.visibility, color: Colors.white),
           ),
         ],
       ),
@@ -136,7 +151,7 @@ class _QuickActions extends StatelessWidget {
             () => context.push(Routes.pay, extra: ServiceCategory.mobile)),
         _Action(AppAssets.icBills, Strings.actionBills,
             () => context.push(Routes.pay, extra: ServiceCategory.bills)),
-        _Action(AppAssets.icHistory, Strings.actionHistory, () => context.push(Routes.history)),
+        _Action(AppAssets.icHistory, Strings.actionHistory, () => context.go(Routes.monitoring)),
       ],
     );
   }
@@ -168,13 +183,14 @@ class _Action extends StatelessWidget {
   }
 }
 
-class _CardRow extends StatelessWidget {
+class _CardRow extends ConsumerWidget {
   const _CardRow(this.card);
 
   final CardInfo card;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hidden = ref.watch(balanceHiddenProvider);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
@@ -192,7 +208,8 @@ class _CardRow extends StatelessWidget {
               children: [
                 Text('${card.network} ${card.masked}',
                     style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(formatSom(card.balanceTiyin), style: const TextStyle(color: AppColors.muted)),
+                Text(hidden ? Strings.hiddenAmount : formatSom(card.balanceTiyin),
+                    style: const TextStyle(color: AppColors.muted)),
               ],
             ),
           ),

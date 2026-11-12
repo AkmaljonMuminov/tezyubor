@@ -9,6 +9,7 @@ class MockAuthRepository implements AuthRepository {
 
   final Map<String, int> _attempts = {};
   String? _pin;
+  String? _phone;
 
   @override
   Future<String> requestOtp(String phone) async {
@@ -16,6 +17,7 @@ class MockAuthRepository implements AuthRepository {
     if (normalizePhone(phone) == null) {
       throw const AuthException('VALIDATION_ERROR', "Telefon raqami noto'g'ri");
     }
+    _phone = maskPhone(normalizePhone(phone)!);
     final id = 'mock-${DateTime.now().microsecondsSinceEpoch}';
     _attempts[id] = 0;
     return id;
@@ -53,4 +55,11 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<bool> verifyPin(String pin) async => _pin != null && _pin == pin;
+
+  @override
+  Future<String?> maskedPhone() async => _phone;
+
+  /// Mock'da PIN "server holati" hisoblanadi, shuning uchun chiqishda saqlanib qoladi.
+  @override
+  Future<void> logout() async {}
 }

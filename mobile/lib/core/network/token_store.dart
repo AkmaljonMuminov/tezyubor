@@ -7,6 +7,8 @@ abstract class TokenStore {
   Future<bool> readPinSet();
   Future<void> saveTokens({required String access, required String refresh});
   Future<void> savePinSet(bool value);
+  Future<String?> readPhone();
+  Future<void> savePhone(String maskedPhone);
   Future<void> clear();
 }
 
@@ -18,6 +20,7 @@ class SecureTokenStore implements TokenStore {
   static const _kAccess = 'access_token';
   static const _kRefresh = 'refresh_token';
   static const _kPinSet = 'pin_set';
+  static const _kPhone = 'phone_masked';
 
   @override
   Future<String?> readRefresh() => _s.read(key: _kRefresh);
@@ -38,10 +41,17 @@ class SecureTokenStore implements TokenStore {
   Future<void> savePinSet(bool value) => _s.write(key: _kPinSet, value: value ? '1' : '0');
 
   @override
+  Future<String?> readPhone() => _s.read(key: _kPhone);
+
+  @override
+  Future<void> savePhone(String maskedPhone) => _s.write(key: _kPhone, value: maskedPhone);
+
+  @override
   Future<void> clear() async {
     await _s.delete(key: _kAccess);
     await _s.delete(key: _kRefresh);
     await _s.delete(key: _kPinSet);
+    await _s.delete(key: _kPhone);
   }
 }
 
@@ -50,6 +60,7 @@ class MemoryTokenStore implements TokenStore {
   String? _access;
   String? _refresh;
   bool _pinSet = false;
+  String? _phone;
 
   @override
   Future<String?> readRefresh() async => _refresh;
@@ -70,9 +81,16 @@ class MemoryTokenStore implements TokenStore {
   Future<void> savePinSet(bool value) async => _pinSet = value;
 
   @override
+  Future<String?> readPhone() async => _phone;
+
+  @override
+  Future<void> savePhone(String maskedPhone) async => _phone = maskedPhone;
+
+  @override
   Future<void> clear() async {
     _access = null;
     _refresh = null;
     _pinSet = false;
+    _phone = null;
   }
 }

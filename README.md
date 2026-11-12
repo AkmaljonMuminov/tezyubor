@@ -2,13 +2,16 @@
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
-## Holat (2-bosqich)
+## Holat (3-bosqich)
 
 | Qism | Holat |
 |---|---|
 | Grafikalar (SVG, matnsiz, Tezyubor brendi) | ✅ `mobile/assets` |
 | Flutter: splash, telefon, OTP, PIN yaratish/kirish | ⚠️ Yozilgan, **ishga tushirib tekshirilmagan** |
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
+| Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
+| Flutter: monitoring (oylik tushum/xarajat, filtr, kunlar bo'yicha), so'nggi qabul qiluvchilar, kartalar orasida o'tkazma | ⚠️ Yozilgan (mock), ishga tushirib tekshirilmagan |
+| Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Chiqish faqat qurilmadagi tokenlarni o'chiradi, serverda bekor qilish endpointi yo'q |
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — faqat auth | ⚠️ Yozilgan, backend bilan birga tekshirilmagan |
 | Flutter testlar (`validators`, `wallet`, `http_auth`) | ⚠️ Yozilgan, ishga tushirilmagan (CI'da `flutter test` ishlaydi, natijasi build'ni to'xtatmaydi) |
 | Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ 41 ta unit test o'tgan |

@@ -29,6 +29,17 @@ abstract class WalletRepository {
     required String idempotencyKey,
   });
 
+  /// O'z kartalari orasida (komissiyasiz). Kalitlar [transfer] dagidek.
+  Future<Txn> transferOwn({
+    required String fromCardId,
+    required String toCardId,
+    required int amountTiyin,
+    required String idempotencyKey,
+  });
+
+  /// Oldin o'tkazma qilingan qabul qiluvchilar, eng yangisi birinchi.
+  Future<List<Recipient>> recentRecipients();
+
   Future<Txn> pay({
     required String fromCardId,
     required String serviceId,
@@ -49,6 +60,10 @@ final walletRepositoryProvider = Provider<WalletRepository>((ref) {
 
 final cardsProvider = FutureProvider<List<CardInfo>>(
   (ref) => ref.watch(walletRepositoryProvider).cards(),
+);
+
+final recipientsProvider = FutureProvider<List<Recipient>>(
+  (ref) => ref.watch(walletRepositoryProvider).recentRecipients(),
 );
 
 final transactionsProvider = FutureProvider<List<Txn>>(

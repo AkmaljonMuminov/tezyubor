@@ -1,6 +1,7 @@
 import '../../../core/assets.dart';
 
-enum TxnType { transfer, payment, topUp }
+/// `ownTransfer` — o'z kartalari orasida: jami balansni o'zgartirmaydi, tushum/xarajatga kirmaydi.
+enum TxnType { transfer, ownTransfer, payment, topUp }
 
 enum TxnStatus { succeeded, failed }
 
@@ -120,3 +121,64 @@ const List<PayService> kPayServices = [
 /// Komissiya: o'tkazmada 0,5% (yuqoriga yaxlitlanadi), to'lovda yo'q.
 /// Ko'rsatish uchun; haqiqiy komissiyani SERVER hisoblaydi va qayta tekshiradi.
 int transferFeeTiyin(int amountTiyin) => (amountTiyin * 5 + 999) ~/ 1000;
+
+/// Oldin o'tkazma qilingan qabul qiluvchi.
+/// TEST REJIMI: mock'da to'liq raqam xotirada. Haqiqiy tizimda karta raqami saqlanmaydi, faqat provayder tokeni.
+class Recipient {
+  const Recipient({required this.cardNumber});
+
+  final String cardNumber;
+
+  String get masked => '${cardNumber.substring(0, 4)} \u2022\u2022\u2022\u2022 \u2022\u2022\u2022\u2022 ${cardNumber.substring(12)}';
+}
+
+class PeriodSummary {
+  const PeriodSummary({required this.incomeTiyin, required this.expenseTiyin});
+
+  final int incomeTiyin;
+
+  /// Musbat son (komissiya bilan).
+  final int expenseTiyin;
+}
+
+/// Berilgan oy uchun tushum va xarajat. Faqat muvaffaqiyatli operatsiyalar;
+/// o'z kartalari orasidagi o'tkazma hisobga olinmaydi.
+PeriodSummary summarizeMonth(List<Txn> txns, DateTime month) {
+  var income = 0;
+  var expense = 0;
+  for (final t in txns) {
+    if (t.status != TxnStatus.succeeded || t.type == TxnType.ownTransfer) continue;
+    final d = t.createdAt.toLocal();
+    if (d.year != month.year || d.month != month.month) continue;
+    if (t.amountTiyin > 0) {
+      income += t.amountTiyin;
+    } else {
+      expense += -t.totalTiyin;
+    }
+  }
+  return PeriodSummary(incomeTiyin: income, expenseTiyin: expense);
+}
+
+enum TxnFilter { all, income, expense }
+
+List<Txn> applyFilter(List<Txn> txns, TxnFilter f) {
+  switch (f) {
+    case TxnFilter.all:
+      return txns;
+    case TxnFilter.income:
+      return txns.where((t) => t.amountTiyin > 0 && t.type != TxnType.ownTransfer).toList();
+    case TxnFilter.expense:
+      return txns.where((t) => t.amountTiyin < 0 && t.type != TxnType.ownTransfer).toList();
+  }
+}
+
+/// Kun bo'yicha guruhlaydi (yangisi birinchi). Kalit — kun boshi (mahalliy vaqt).
+List<MapEntry<DateTime, List<Txn>>> groupByDay(List<Txn> txns) {
+  final sorted = [...txns]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  final groups = <DateTime, List<Txn>>{};
+  for (final t in sorted) {
+    final l = t.createdAt.toLocal();
+    groups.putIfAbsent(DateTime(l.year, l.month, l.day), () => []).add(t);
+  }
+  return groups.entries.toList();
+}

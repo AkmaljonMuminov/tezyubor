@@ -55,3 +55,9 @@ bool isPinAcceptable(String pin) {
   if (steps.length == 1 && (steps.first == 1 || steps.first == -1)) return false;
   return true;
 }
+
+/// `998901234567` -> `+998 90 *** ** 67` (ekranda to'liq raqam ko'rsatilmaydi).
+String maskPhone(String normalized) {
+  if (normalized.length != 12) return '+$normalized';
+  return '+998 ${normalized.substring(3, 5)} *** ** ${normalized.substring(10)}';
+}

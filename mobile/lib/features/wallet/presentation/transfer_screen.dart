@@ -16,7 +16,10 @@ import '../data/wallet_repository.dart';
 import '../domain/wallet_models.dart';
 
 class TransferScreen extends ConsumerStatefulWidget {
-  const TransferScreen({super.key});
+  const TransferScreen({super.key, this.initialCard});
+
+  /// So'nggi qabul qiluvchidan oldindan to'ldiriladigan karta raqami.
+  final String? initialCard;
 
   @override
   ConsumerState<TransferScreen> createState() => _TransferScreenState();
@@ -33,6 +36,12 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
 
   /// Kiritilgan ma'lumot o'zgarsa yangilanadi; bir xil ma'lumot bilan qayta urinish — bir xil kalit.
   String _key = newIdempotencyKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _cardCtrl.text = widget.initialCard ?? '';
+  }
 
   @override
   void dispose() {
