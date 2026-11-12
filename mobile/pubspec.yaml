@@ -1,5 +1,5 @@
 name: tezyubor_mobile
-description: Tezyubor — mobil to'lov ilovasi (1-bosqich: autentifikatsiya, test rejimi).
+description: "Tezyubor — mobil to'lov ilovasi (2-bosqich: autentifikatsiya, hamyon, test rejimi)."
 publish_to: "none"
 version: 0.1.0+1
 
