@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 # Faqat ishlash uchun kerak bo'lgan paketlar (test paketlarisiz).
-RUN pip install --no-cache-dir "fastapi>=0.110" "uvicorn>=0.29" "pydantic>=2.6" "PyJWT>=2.8"
+RUN pip install --no-cache-dir "fastapi>=0.110" "uvicorn>=0.29" "pydantic>=2.6" "PyJWT>=2.8" "psycopg[binary,pool]>=3.1" "cryptography>=42"
 
 COPY app ./app
 

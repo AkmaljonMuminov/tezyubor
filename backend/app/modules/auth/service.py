@@ -66,6 +66,7 @@ class AuthService:
         if not is_pin_acceptable(pin):
             raise ValidationError("PIN juda oddiy yoki noto'g'ri formatda")
         user.pin_hash = hash_pin(pin)
+        self._users.save(user)
         self._audit.record("pin_set", user_id=user.id)
 
     def login_with_pin(self, refresh_token: str, pin: str) -> TokenPair:
@@ -84,10 +85,14 @@ class AuthService:
             if user.pin_failures >= self._s.pin_max_failures:
                 user.pin_failures = 0
                 user.pin_locked_until = now + self._s.pin_lock_seconds
+                self._users.save(user)
                 self._audit.record("pin_locked", user_id=user.id)
                 raise PinLocked("PIN vaqtincha bloklangan", retry_after=self._s.pin_lock_seconds)
+            self._users.save(user)
             raise PinInvalid("PIN noto'g'ri", attempts_left=self._s.pin_max_failures - user.pin_failures)
-        user.pin_failures = 0
+        if user.pin_failures:
+            user.pin_failures = 0
+            self._users.save(user)
         self._audit.record("login_pin_success", user_id=user.id)
         return self._tokens.rotate(refresh_token)
 

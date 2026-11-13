@@ -28,6 +28,8 @@ class Settings:
     eskiz_email: str = field(default="", repr=False)
     eskiz_password: str = field(default="", repr=False)
     eskiz_from: str = "4546"
+    # Bo'sh bo'lsa ma'lumot xotirada (restartda yo'qoladi). Parol URL ichida bo'lgani uchun repr/log'ga tushmaydi.
+    database_url: str = field(default="", repr=False)
 
     @property
     def test_mode(self) -> bool:
@@ -48,6 +50,8 @@ class Settings:
             raise ConfigError("SMS_PROVIDER=eskiz uchun ESKIZ_EMAIL va ESKIZ_PASSWORD kerak")
         if "{code}" not in self.sms_template:
             raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
+        if self.database_url and not self.database_url.startswith(("postgres://", "postgresql://")):
+            raise ConfigError("DATABASE_URL postgres:// yoki postgresql:// bilan boshlanishi kerak")
         if self.sms_daily_cap < 1:
             raise ConfigError("SMS_DAILY_CAP kamida 1 bo'lishi kerak")
         if self.sms_8hour_cap < 0:
@@ -68,6 +72,7 @@ class Settings:
                 eskiz_email=environ.get("ESKIZ_EMAIL", ""),
                 eskiz_password=environ.get("ESKIZ_PASSWORD", ""),
                 eskiz_from=environ.get("ESKIZ_FROM", "4546"),
+                database_url=environ.get("DATABASE_URL", ""),
             )
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None

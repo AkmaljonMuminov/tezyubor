@@ -46,6 +46,8 @@ class TokenService:
             algorithm="HS256",
         )
         refresh = secrets.token_urlsafe(32)
+        if secrets.randbelow(50) == 0:  # eski yozuvlarni vaqti-vaqti bilan tozalash (arzon)
+            self._store.purge_expired(now)
         self._store.put(
             _sha(refresh),
             RefreshRecord(user_id, family_id or uuid.uuid4().hex, now + self._s.refresh_ttl),
@@ -74,7 +76,8 @@ class TokenService:
         return rec.user_id
 
     def rotate(self, refresh_token: str) -> TokenPair:
-        rec = self._store.get(_sha(refresh_token or ""))
+        token_hash = _sha(refresh_token or "")
+        rec = self._store.get(token_hash)
         if rec is None:
             raise TokenInvalid("Token yaroqsiz")
         if rec.used:
@@ -82,5 +85,8 @@ class TokenService:
             raise TokenReuseDetected("Token qayta ishlatildi, sessiya bekor qilindi")
         if self._clock() >= rec.expires_at:
             raise TokenInvalid("Token yaroqsiz")
-        rec.used = True
+        if not self._store.mark_used(token_hash):
+            # Bir vaqtda ikkinchi so'rov tokenni oldin ishlatib bo'lgan
+            self._store.revoke_family(rec.family_id)
+            raise TokenReuseDetected("Token qayta ishlatildi, sessiya bekor qilindi")
         return self.issue_pair(rec.user_id, rec.family_id)

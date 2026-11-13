@@ -1,11 +1,16 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .config import Settings
+from .db import Database
 from .errors import AppError, ConfigError, SmsDeliveryError
 from .modules.auth.audit import AuditLog
 from .modules.auth.otp import OtpService
+from .modules.auth.pg_stores import PgOtpStore, PgRefreshStore, PgUserStore
 from .modules.auth.router import build_router
 from .modules.auth.service import AuthService
 from .modules.auth.sms_factory import build_sms_sender
@@ -20,17 +25,33 @@ def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
     if not settings.test_mode and not getattr(sms, "is_real", False):
         raise ConfigError("Production uchun haqiqiy SMS provayder kerak (hozircha ulanmagan)")
 
-    # 1-bosqich: xotirada saqlash (restartda yo'qoladi). Keyingi bosqich: Redis + PostgreSQL.
+    db = None
+    if settings.database_url:
+        db = Database(settings.database_url)
+        db.migrate()
+        otp_store, refresh_store, user_store = PgOtpStore(db), PgRefreshStore(db), PgUserStore(db)
+    else:
+        # Xotirada saqlash: server qayta ishga tushsa foydalanuvchilar, PIN va sessiyalar yo'qoladi.
+        if not settings.test_mode:
+            logging.getLogger("tezyubor").warning("DATABASE_URL yo'q: ma'lumot xotirada, restartda yo'qoladi")
+        otp_store, refresh_store, user_store = MemoryOtpStore(), MemoryRefreshStore(), MemoryUserStore()
     svc = AuthService(
         settings,
-        OtpService(settings, MemoryOtpStore(), sms),
-        TokenService(settings, MemoryRefreshStore()),
-        MemoryUserStore(),
+        OtpService(settings, otp_store, sms),
+        TokenService(settings, refresh_store),
+        user_store,
         AuditLog(),
     )
+
+    @asynccontextmanager
+    async def lifespan(_: FastAPI):
+        yield
+        if db is not None:
+            db.close()
     # Productionda API hujjati (/docs, /openapi.json) yopiq: tashqaridan tuzilma ko'rinmasin.
     docs = {} if settings.test_mode else {"docs_url": None, "redoc_url": None, "openapi_url": None}
-    app = FastAPI(title="Tezyubor API", version="0.1.0", **docs)
+    app = FastAPI(title="Tezyubor API", version="0.1.0", lifespan=lifespan, **docs)
+    app.state.db = db
     app.include_router(build_router(svc, settings.otp_ttl))
 
     @app.exception_handler(AppError)

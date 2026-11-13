@@ -41,13 +41,16 @@ class OtpStore(Protocol):
 class RefreshStore(Protocol):
     def put(self, token_hash: str, rec: RefreshRecord) -> None: ...
     def get(self, token_hash: str) -> RefreshRecord | None: ...
+    def mark_used(self, token_hash: str) -> bool: ...
     def revoke_family(self, family_id: str) -> None: ...
+    def purge_expired(self, now: float) -> None: ...
 
 
 class UserStore(Protocol):
     def get(self, user_id: str) -> User | None: ...
     def get_by_phone(self, phone: str) -> User | None: ...
     def create(self, phone: str) -> User: ...
+    def save(self, user: User) -> None: ...
 
 
 class MemoryOtpStore:
@@ -68,7 +71,10 @@ class MemoryOtpStore:
         return list(self._requests.get(phone, []))
 
     def add_request(self, phone, ts):
-        self._requests.setdefault(phone, []).append(ts)
+        times = self._requests.setdefault(phone, [])
+        times.append(ts)
+        # Eng uzun oyna 24 soat; undan eskilari kerak emas (xotira o'smasin)
+        times[:] = [t for t in times if t >= ts - 2 * 86400]
 
     def discard_request(self, phone, ts):
         """SMS yuborilmay qolsa, foydalanuvchi limiti behuda sarflanmasin."""
@@ -87,8 +93,19 @@ class MemoryRefreshStore:
     def get(self, token_hash):
         return self._records.get(token_hash)
 
+    def mark_used(self, token_hash):
+        rec = self._records.get(token_hash)
+        if rec is None or rec.used:
+            return False
+        rec.used = True
+        return True
+
     def revoke_family(self, family_id):
         for h in [h for h, r in self._records.items() if r.family_id == family_id]:
+            del self._records[h]
+
+    def purge_expired(self, now):
+        for h in [h for h, r in self._records.items() if r.expires_at < now - 86400]:
             del self._records[h]
 
 
@@ -107,7 +124,14 @@ class MemoryUserStore:
     def create(self, phone):
         import uuid
 
+        existing = self.get_by_phone(phone)
+        if existing is not None:
+            return existing
         user = User(id=str(uuid.uuid4()), phone=phone)
         self._users[user.id] = user
         self._by_phone[phone] = user.id
         return user
+
+    def save(self, user):
+        """Xotirada obyektning o'zi saqlanadi; bu usul bazali implementatsiya bilan bir xil interfeys uchun."""
+        self._users[user.id] = user
