@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/brand.dart';
 import '../domain/wallet_models.dart';
 import 'mock_wallet_repository.dart';
 
@@ -61,12 +60,9 @@ abstract class WalletRepository {
   });
 }
 
+/// Hamyon backendi hali yo'q: `API_MODE=real` bo'lganda ham ma'lumot soxta (ilovada "TEST HAMYON" banneri bor).
 final walletRepositoryProvider = Provider<WalletRepository>((ref) {
-  if (!kMockMode) {
-    throw UnimplementedError(
-      "Hamyon backendi hali yo'q. Hozircha API_MODE=mock ishlating.",
-    );
-  }
+  // Hamyon backendi ulanganda: `kWalletIsMock = false` qilib, shu yerda HTTP repository qaytariladi.
   return MockWalletRepository();
 });
 

@@ -20,7 +20,7 @@ class ReceiptScreen extends StatelessWidget {
   final bool fresh;
 
   Future<void> _copy(BuildContext context) async {
-    await Clipboard.setData(ClipboardData(text: buildReceiptText(txn, test: kMockMode)));
+    await Clipboard.setData(ClipboardData(text: buildReceiptText(txn, test: kWalletIsMock)));
     if (!context.mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -91,7 +91,7 @@ class ReceiptScreen extends StatelessWidget {
                               color: AppColors.primaryDark,
                             ),
                           ),
-                          if (kMockMode)
+                          if (kWalletIsMock)
                             const Padding(
                               padding: EdgeInsets.only(top: 6),
                               child: Text(
