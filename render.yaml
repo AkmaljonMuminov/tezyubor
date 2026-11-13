@@ -1,0 +1,32 @@
+# Render.com Blueprint. Maxfiy qiymatlar bu faylda YO'Q: JWT/OTP kalitlari avtomatik yaratiladi,
+# Eskiz login/paroli Render panelida qo'lda kiritiladi (sync: false).
+services:
+  - type: web
+    name: tezyubor-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_SECRET
+        generateValue: true
+      - key: SMS_PROVIDER
+        value: eskiz
+      - key: ESKIZ_EMAIL
+        sync: false
+      - key: ESKIZ_PASSWORD
+        sync: false
+      - key: ESKIZ_FROM
+        value: "4546"
+      - key: SMS_TEMPLATE
+        value: "Tezyubor tasdiqlash kodi: {code}. Ushbu kodni hech kimga bermang! Uni firibgarlar so'rashi mumkin."
+      - key: SMS_DAILY_CAP
+        value: "9"
+      - key: SMS_8HOUR_CAP
+        value: "3"

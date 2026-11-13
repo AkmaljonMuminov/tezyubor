@@ -19,3 +19,31 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python -m unittest discover -s tests -t . -v
+
+  docker:
+    # Dockerfile ishlashini tekshiradi: image yig'iladi, konteyner ko'tariladi, /health javob beradi.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t tezyubor-api backend
+      - name: Smoke test (test rejimi, SMS yo'q)
+        run: |
+          docker run -d --name api -p 8000:8000 \
+            -e APP_ENV=development \
+            -e JWT_SECRET=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            -e OTP_SECRET=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+            tezyubor-api
+          for i in $(seq 1 20); do
+            if curl -fsS http://localhost:8000/health; then echo; exit 0; fi
+            sleep 1
+          done
+          docker logs api
+          exit 1
+      - name: Production rejimi SMS provayderisiz ishga tushmasligi kerak
+        run: |
+          docker run --rm \
+            -e APP_ENV=production \
+            -e JWT_SECRET=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+            -e OTP_SECRET=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+            tezyubor-api 2>&1 | tee out.txt || true
+          grep -q "SMS provayder" out.txt
