@@ -24,6 +24,24 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 CREATE INDEX IF NOT EXISTS refresh_tokens_family_idx ON refresh_tokens (family_id);
 CREATE INDEX IF NOT EXISTS refresh_tokens_expires_idx ON refresh_tokens (expires_at);
 
+CREATE TABLE IF NOT EXISTS kyc_profiles (
+    user_id          uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    status           text NOT NULL,
+    provider         text NOT NULL,
+    external_id      text,
+    session_id       text,
+    consent_version  text,
+    consent_at       double precision,
+    payload          bytea,                 -- AES-GCM bilan shifrlangan (pasport, JShShIR, F.I.Sh., tug'ilgan sana)
+    key_id           text,
+    pinfl_index      text,                  -- HMAC indeks: bir xil JShShIR ikki hisobda bo'lmasligi uchun
+    failed_attempts  integer NOT NULL DEFAULT 0,
+    locked_until     double precision NOT NULL DEFAULT 0,
+    verified_at      double precision,
+    updated_at       double precision NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS kyc_profiles_pinfl_idx ON kyc_profiles (pinfl_index) WHERE pinfl_index IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS sms_requests (
     id     bigserial PRIMARY KEY,
     phone  text NOT NULL,

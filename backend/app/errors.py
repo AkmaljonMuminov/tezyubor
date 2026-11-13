@@ -75,3 +75,45 @@ class SmsDeliveryError(AppError):
 
     http_status = 502
     code = "SMS_DELIVERY_FAILED"
+
+
+class KycConsentRequired(AppError):
+    http_status = 403
+    code = "KYC_CONSENT_REQUIRED"
+
+
+class KycNotStarted(AppError):
+    http_status = 409
+    code = "KYC_NOT_STARTED"
+
+
+class KycNotReady(AppError):
+    http_status = 409
+    code = "KYC_NOT_READY"
+
+
+class KycAlreadyVerified(AppError):
+    http_status = 409
+    code = "KYC_ALREADY_VERIFIED"
+
+
+class KycIdentityTaken(AppError):
+    http_status = 409
+    code = "KYC_IDENTITY_TAKEN"
+
+
+class KycRejected(AppError):
+    http_status = 400
+    code = "KYC_REJECTED"
+
+
+class KycLocked(AppError):
+    http_status = 429
+    code = "KYC_LOCKED"
+
+
+class KycProviderError(AppError):
+    """Identifikatsiya provayderi xatosi. Tafsilot foydalanuvchiga ko'rsatilmaydi."""
+
+    http_status = 502
+    code = "KYC_PROVIDER_ERROR"

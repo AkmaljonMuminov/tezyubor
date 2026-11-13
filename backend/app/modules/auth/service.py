@@ -35,6 +35,7 @@ class AuthService:
         self._tokens = tokens
         self._users = users
         self._audit = audit
+        self.audit = audit
         self._clock = clock
 
     def request_otp(self, phone: str) -> str:

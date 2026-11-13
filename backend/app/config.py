@@ -30,6 +30,10 @@ class Settings:
     eskiz_from: str = "4546"
     # Bo'sh bo'lsa ma'lumot xotirada (restartda yo'qoladi). Parol URL ichida bo'lgani uchun repr/log'ga tushmaydi.
     database_url: str = field(default="", repr=False)
+    # Identifikatsiya (KYC). Yoqilsa shaxsiy ma'lumot yig'iladi: PII_KEY majburiy, productionda baza ham majburiy.
+    kyc_enabled: bool = False
+    kyc_provider: str = "fake"                       # fake (faqat test) | myid
+    pii_key: str = field(default="", repr=False)     # base64, 32 bayt
 
     @property
     def test_mode(self) -> bool:
@@ -52,6 +56,19 @@ class Settings:
             raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
         if self.database_url and not self.database_url.startswith(("postgres://", "postgresql://")):
             raise ConfigError("DATABASE_URL postgres:// yoki postgresql:// bilan boshlanishi kerak")
+        if self.kyc_provider not in ("fake", "myid"):
+            raise ConfigError(f"KYC_PROVIDER noto'g'ri: {self.kyc_provider!r}")
+        if self.kyc_enabled:
+            if not self.pii_key:
+                raise ConfigError("KYC_ENABLED=true uchun PII_KEY kerak (pasport ma'lumoti shifrlab saqlanadi)")
+            from .security.pii import decode_key
+
+            decode_key(self.pii_key)
+            if not self.test_mode:
+                if not self.database_url:
+                    raise ConfigError("Productionda identifikatsiya uchun DATABASE_URL majburiy (xotirada saqlanmaydi)")
+                if self.kyc_provider == "fake":
+                    raise ConfigError("Productionda soxta KYC provayder ishlatib bo'lmaydi (KYC_PROVIDER=myid)")
         if self.sms_daily_cap < 1:
             raise ConfigError("SMS_DAILY_CAP kamida 1 bo'lishi kerak")
         if self.sms_8hour_cap < 0:
@@ -73,6 +90,9 @@ class Settings:
                 eskiz_password=environ.get("ESKIZ_PASSWORD", ""),
                 eskiz_from=environ.get("ESKIZ_FROM", "4546"),
                 database_url=environ.get("DATABASE_URL", ""),
+                kyc_enabled=environ.get("KYC_ENABLED", "false").strip().lower() in ("1", "true", "yes"),
+                kyc_provider=environ.get("KYC_PROVIDER", "fake"),
+                pii_key=environ.get("PII_KEY", ""),
             )
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None
