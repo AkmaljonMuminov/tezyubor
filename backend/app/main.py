@@ -7,11 +7,16 @@ from fastapi.responses import JSONResponse
 
 from .config import Settings
 from .db import Database
-from .errors import AppError, ConfigError, SmsDeliveryError
+from .errors import AppError, ConfigError, KycProviderError, SmsDeliveryError
 from .modules.auth.audit import AuditLog
 from .modules.auth.otp import OtpService
 from .modules.auth.pg_stores import PgOtpStore, PgRefreshStore, PgUserStore
 from .modules.auth.router import build_router
+from .modules.kyc.provider import build_kyc_provider
+from .modules.kyc.router import build_kyc_router
+from .modules.kyc.service import KycService
+from .modules.kyc.store import MemoryKycStore, PgKycStore
+from .security.pii import PiiCipher
 from .modules.auth.service import AuthService
 from .modules.auth.sms_factory import build_sms_sender
 from .modules.auth.stores import MemoryOtpStore, MemoryRefreshStore, MemoryUserStore
@@ -53,6 +58,15 @@ def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
     app = FastAPI(title="Tezyubor API", version="0.1.0", lifespan=lifespan, **docs)
     app.state.db = db
     app.include_router(build_router(svc, settings.otp_ttl))
+    if settings.kyc_enabled:
+        kyc = KycService(
+            settings,
+            PgKycStore(db) if db is not None else MemoryKycStore(),
+            build_kyc_provider(settings),
+            PiiCipher(settings.pii_key),
+            svc.audit,
+        )
+        app.include_router(build_kyc_router(kyc, svc.authenticate))
 
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError):
@@ -60,6 +74,8 @@ def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
         if isinstance(exc, SmsDeliveryError):
             # Provayder xabarida ichki tafsilot bo'lishi mumkin — foydalanuvchiga faqat umumiy matn.
             message = "SMS yuborib bo'lmadi. Birozdan keyin qayta urinib ko'ring"
+        elif isinstance(exc, KycProviderError):
+            message = "Identifikatsiya xizmati vaqtincha ishlamayapti. Keyinroq urinib ko'ring"
         return JSONResponse(
             status_code=exc.http_status,
             content={"error": {"code": exc.code, "message": message, **exc.details}},
