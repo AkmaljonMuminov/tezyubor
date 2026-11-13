@@ -7,6 +7,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Qism | Holat |
 |---|---|
 | Grafikalar: premium kit (navy/royal/oltin, T logotip, 25 ikonka, bannerlar, launcher ikonka) | ✅ Asl kit `design/premium_kit`, ilova uchun tozalangani `mobile/assets` (SVG ichida matn/pattern/filtr yo'q — Flutter chizmaydi). Telefon ekranida ko'rinishi odam ko'zi bilan tekshirilmagan |
+Loyiha yopildi 
 | Flutter: splash, telefon, OTP, PIN yaratish/kirish | ⚠️ Yozilgan, **ishga tushirib tekshirilmagan** |
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
 | Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
