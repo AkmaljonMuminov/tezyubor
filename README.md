@@ -17,7 +17,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — faqat auth | ⚠️ Yozilgan, backend bilan birga tekshirilmagan |
 | Flutter testlar (`validators`, `wallet`, `http_auth`) | ⚠️ Yozilgan, ishga tushirilmagan (CI'da `flutter test` ishlaydi, natijasi build'ni to'xtatmaydi) |
 | Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ unit testlar o'tgan (CI: Backend tests) |
-| Backend: SMS yuborish (Eskiz.uz) — token, qayta urinish, shablon, sutkalik limit, xatoda limitni qaytarish | ⚠️ Yozilgan, 19 ta test (soxta HTTP bilan). **Haqiqiy Eskiz hisobi bilan jonli sinalmagan** — `python3 -m app.tools.sms_check <telefon>` bilan tekshiring |
+| Backend: SMS yuborish (Eskiz.uz) — token, qayta urinish, shablon, sutkalik limit, xatoda limitni qaytarish | ⚠️ Yozilgan, testlar (soxta HTTP bilan). **Haqiqiy Eskiz hisobi bilan jonli sinalmagan** — `python3 -m app.tools.sms_check <telefon>` bilan tekshiring |
 | Backend HTTP qatlami (`router.py`, `main.py`) | ⚠️ Yozilgan, **tekshirilmagan** |
 | Backend: karta, o'tkazma, to'lov, tarix modullari | ❌ Yo'q (hamyon hozircha faqat mobil mock) |
 | Biometrika, PIN tiklash, OTP qayta yuborish, o'tkazmada PIN tasdig'i | ❌ Boshlanmagan |
@@ -42,8 +42,14 @@ export $(grep -v '^#' ../.env | xargs) && uvicorn app.main:create_app --factory 
 ```
 
 ### SMS (Eskiz)
-`.env` da `SMS_PROVIDER=eskiz`, `ESKIZ_EMAIL`, `ESKIZ_PASSWORD`, `ESKIZ_FROM`, `SMS_TEMPLATE` (Eskiz'da tasdiqlangan matn), `SMS_DAILY_CAP` ni to'ldiring.
-Haqiqiy SMS faqat `APP_ENV=production` da yuboriladi (boshqa muhitda OTP doim `123456`). Tekshirish: `export $(grep -v '^#' ../.env | xargs) && python3 -m app.tools.sms_check 901234567`.
+`.env` da `SMS_PROVIDER=eskiz`, `ESKIZ_EMAIL`, `ESKIZ_PASSWORD`, `ESKIZ_FROM`, `SMS_TEMPLATE` (Eskiz'da tasdiqlangan matn), `SMS_DAILY_CAP` (sutkada jami) va `SMS_8HOUR_CAP` (8 soatda jami, 0 — o'chirilgan) ni to'ldiring.
+Bu limitlar BUTUN tizim bo'yicha (hamma foydalanuvchilar uchun umumiy) va hisobdagi pulni tugatib qo'yishdan himoya qiladi. Limit tugasa, yangi kod so'rash vaqtincha to'xtaydi.
+Haqiqiy SMS faqat `APP_ENV=production` da yuboriladi (boshqa muhitda OTP doim `123456`).
+
+Tekshirish (bitta haqiqiy SMS, o'z raqamingizga; hisobdan pul yechiladi, limitlarga kirmaydi):
+`cd backend && python3 -m app.tools.sms_check 901234567 --env-file ../.env`
+
+Server: `uvicorn app.main:create_app --factory --env-file ../.env`.
 Login/parol faqat serverning `.env` faylida; Git'ga, chatga yoki log'ga yozilmaydi.
 
 ## Mobil

@@ -24,6 +24,7 @@ class Settings:
     sms_provider: str = "none"                       # none | eskiz
     sms_template: str = "Tezyubor tasdiqlash kodi: {code}"
     sms_daily_cap: int = 500                         # bir sutkada jami yuboriladigan SMS (pul yo'qotishdan himoya)
+    sms_8hour_cap: int = 0                           # 8 soat ichida jami SMS; 0 — o'chirilgan
     eskiz_email: str = field(default="", repr=False)
     eskiz_password: str = field(default="", repr=False)
     eskiz_from: str = "4546"
@@ -49,6 +50,8 @@ class Settings:
             raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
         if self.sms_daily_cap < 1:
             raise ConfigError("SMS_DAILY_CAP kamida 1 bo'lishi kerak")
+        if self.sms_8hour_cap < 0:
+            raise ConfigError("SMS_8HOUR_CAP manfiy bo'lishi mumkin emas (0 — o'chirilgan)")
 
     @staticmethod
     def from_env(environ=None) -> "Settings":
@@ -61,6 +64,7 @@ class Settings:
                 sms_provider=environ.get("SMS_PROVIDER", "none"),
                 sms_template=environ.get("SMS_TEMPLATE", "Tezyubor tasdiqlash kodi: {code}"),
                 sms_daily_cap=int(environ.get("SMS_DAILY_CAP", "500")),
+                sms_8hour_cap=int(environ.get("SMS_8HOUR_CAP", "0")),
                 eskiz_email=environ.get("ESKIZ_EMAIL", ""),
                 eskiz_password=environ.get("ESKIZ_PASSWORD", ""),
                 eskiz_from=environ.get("ESKIZ_FROM", "4546"),
@@ -68,6 +72,6 @@ class Settings:
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None
         except ValueError:
-            raise ConfigError("SMS_DAILY_CAP butun son bo'lishi kerak") from None
+            raise ConfigError("SMS_DAILY_CAP va SMS_8HOUR_CAP butun son bo'lishi kerak") from None
         s.validate()
         return s

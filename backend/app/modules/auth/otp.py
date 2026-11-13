@@ -22,6 +22,7 @@ TEST_CODE = "123456"
 # Hamma foydalanuvchilar uchun umumiy hisoblagich kaliti. Telefon raqami faqat raqamlardan iborat, shuning uchun to'qnashmaydi.
 _GLOBAL_KEY = "*global*"
 _DAY = 86400
+_8H = 8 * 3600
 
 
 class SmsSender(Protocol):
@@ -71,8 +72,17 @@ class OtpService:
         if send_sms:
             # Pul yo'qotishdan himoya: bir sutkadagi jami SMS soni cheklanadi (SMS-bombing, tasodifiy raqamlar).
             day = sorted(t for t in self._store.request_times(_GLOBAL_KEY) if now - t < _DAY)
+            waits = []
             if len(day) >= self._s.sms_daily_cap:
-                raise OtpRateLimited(retry_after=int(_DAY - (now - day[0])) + 1)
+                # Joy bo'shashi uchun eng eski kerakli yozuv muddati tugashi kerak
+                waits.append(_DAY - (now - day[len(day) - self._s.sms_daily_cap]))
+            cap8 = self._s.sms_8hour_cap
+            if cap8 > 0:
+                w8 = [t for t in day if now - t < _8H]
+                if len(w8) >= cap8:
+                    waits.append(_8H - (now - w8[len(w8) - cap8]))
+            if waits:
+                raise OtpRateLimited(retry_after=int(max(waits)) + 1)
         self._store.add_request(phone, now)
         if send_sms:
             self._store.add_request(_GLOBAL_KEY, now)
