@@ -4,6 +4,8 @@ class Strings {
 
   static const testMode = "TEST REJIMI — haqiqiy SMS va to'lov yo'q";
   static const testWalletMode = "TEST HAMYON — balans va to'lovlar soxta, haqiqiy pul emas";
+  static const bannerWelcomeTitle = 'Xush kelibsiz!';
+  static const bannerWelcomeSubtitle = 'Tez. Oson. Ishonchli.';
   static const phoneTitle = 'Telefon raqamingiz';
   static const phoneHint = 'XX XXX XX XX';
   static const phoneError = "Telefon raqami noto'g'ri";

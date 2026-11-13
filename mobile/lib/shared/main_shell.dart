@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/assets.dart';
 import '../core/l10n/strings.dart';
+import '../core/theme/app_colors.dart';
 
 /// Pastki navigatsiya: Asosiy, O'tkazmalar, To'lov, Monitoring, Profil.
 /// Har bo'limning o'z navigatsiya tarixi saqlanadi (`StatefulShellRoute`).
+/// Navy panel: faol ikonka oltin gradient, nofaol — och ko'k (dizayn tizimi).
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.navigationShell});
 
@@ -23,18 +27,51 @@ class MainShell extends StatelessWidget {
           initialLocation: i == navigationShell.currentIndex,
         ),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: Strings.navHome),
           NavigationDestination(
-              icon: Icon(Icons.swap_horiz), selectedIcon: Icon(Icons.swap_horiz), label: Strings.navTransfers),
+            icon: _NavIcon(AppAssets.icHome),
+            selectedIcon: _NavIcon(AppAssets.icHome, selected: true),
+            label: Strings.navHome,
+          ),
           NavigationDestination(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              selectedIcon: Icon(Icons.account_balance_wallet),
-              label: Strings.navPay),
-          NavigationDestination(icon: Icon(Icons.history), selectedIcon: Icon(Icons.history), label: Strings.navMonitoring),
+            icon: _NavIcon(AppAssets.icTransfer),
+            selectedIcon: _NavIcon(AppAssets.icTransfer, selected: true),
+            label: Strings.navTransfers,
+          ),
           NavigationDestination(
-              icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: Strings.navProfile),
+            icon: _NavIcon(AppAssets.icPayments),
+            selectedIcon: _NavIcon(AppAssets.icPayments, selected: true),
+            label: Strings.navPay,
+          ),
+          NavigationDestination(
+            icon: _NavIcon(AppAssets.icAnalytics),
+            selectedIcon: _NavIcon(AppAssets.icAnalytics, selected: true),
+            label: Strings.navMonitoring,
+          ),
+          NavigationDestination(
+            icon: _NavIcon(AppAssets.icProfile),
+            selectedIcon: _NavIcon(AppAssets.icProfile, selected: true),
+            label: Strings.navProfile,
+          ),
         ],
       ),
+    );
+  }
+}
+
+class _NavIcon extends StatelessWidget {
+  const _NavIcon(this.asset, {this.selected = false});
+
+  final String asset;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SvgPicture.asset(
+      asset,
+      width: 26,
+      height: 26,
+      // Nofaol holatda bitta och rang; faol holatda SVG'dagi oltin gradient.
+      colorFilter: selected ? null : const ColorFilter.mode(AppColors.paleBlueDim, BlendMode.srcIn),
     );
   }
 }

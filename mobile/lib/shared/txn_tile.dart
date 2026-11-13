@@ -45,7 +45,7 @@ class TxnTile extends StatelessWidget {
           fontWeight: FontWeight.w700,
           color: failed
               ? AppColors.error
-              : (incoming ? AppColors.primaryDark : AppColors.text),
+              : (incoming ? AppColors.success : AppColors.text),
         ),
       ),
     );

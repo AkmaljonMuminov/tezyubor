@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#020A25"/><stop offset=".55" stop-color="#081B5B"/><stop offset="1" stop-color="#102D9B"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFF2A6"/><stop offset=".35" stop-color="#FFCB45"/><stop offset="1" stop-color="#F28A00"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#DCE7FF"/><stop offset="1" stop-color="#A9BEF4"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#11C5FF"/><stop offset=".5" stop-color="#194DFF"/><stop offset="1" stop-color="#FFC247"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<pattern id="lines" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V28" stroke="#FFFFFF" stroke-opacity=".035" stroke-width="2"/></pattern>
+</defs>
+<rect width="1080" height="1920" fill="url(#bg)"/><rect width="1080" height="1920" fill="url(#lines)"/>
+<circle cx="540" cy="760" r="410" fill="#123CFF" opacity=".12"/><circle cx="540" cy="760" r="330" fill="none" stroke="#18B8FF" stroke-opacity=".18" stroke-width="3"/>
+<g transform="translate(284 504) scale(1.0)"><rect width="512" height="512" rx="112" fill="url(#bg)" stroke="url(#edge)" stroke-width="7"/><path d="M178 151 Q194 139 218 139 H427 L393 191 Q383 207 361 207 H311 L252 371 Q246 389 227 401 L179 427 L254 207 H113 Z" fill="url(#silver)"/><path d="M78 276 L255 246 L220 285 L90 310 L274 296 L238 350 L108 370 L300 345 L353 245 L424 245 L373 359 L270 418 L333 281 L78 276Z" fill="url(#gold)"/></g>
+<text x="540" y="1170" text-anchor="middle" font-family="Arial,sans-serif" font-size="88" font-weight="800" letter-spacing="7" fill="#F7FAFF">TEZYUBOR</text>
+<text x="540" y="1235" text-anchor="middle" font-family="Arial,sans-serif" font-size="32" letter-spacing="4" fill="#FFCB45">TEZ • OSON • ISHONCHLI</text>
+</svg>

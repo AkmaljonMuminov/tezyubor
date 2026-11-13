@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#020A25"/><stop offset=".55" stop-color="#081B5B"/><stop offset="1" stop-color="#102D9B"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF2A6"/><stop offset=".35" stop-color="#FFCB45"/><stop offset="1" stop-color="#F28A00"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#DCE7FF"/><stop offset="1" stop-color="#A9BEF4"/></linearGradient>
+</defs>
+    <rect width="1200" height="420" rx="36" fill="url(#bg)"/>
+    <circle cx="1020" cy="210" r="190" fill="#174BFF" opacity=".28"/><circle cx="1020" cy="210" r="140" fill="none" stroke="#18B8FF" stroke-opacity=".45" stroke-width="3"/>
+    <path d="M850 290 Q1000 250 1130 95" stroke="url(#gold)" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M870 170h180l-30 45H900z" fill="url(#silver)" opacity=".9"/>
+    
+    
+    </svg>

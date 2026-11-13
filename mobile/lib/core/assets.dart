@@ -1,18 +1,28 @@
+/// Grafika yo'llari. Manba: `design/premium_kit` (Flutter uchun tozalangan: SVG ichida matn, pattern va filtr yo'q —
+/// matnlar vidjetlarda beriladi). Ikonkalarda oltin gradient SVG'ning o'zida; ularni [ServiceIcon] navy fonda ko'rsatadi.
 class AppAssets {
   const AppAssets._();
 
-  static const splashMark = 'assets/brand/splash_mark.svg';
-  static const appIcon = 'assets/brand/app_icon.svg';
+  // Brend
+  static const logo = 'assets/brand/logo.png'; // tasdiqlangan ikonka (yumaloq burchakli, shaffof)
+  static const bgNavy = 'assets/backgrounds/premium_navy.svg';
 
-  static const icTransfer = 'assets/icons/ic_transfer.svg';
-  static const icMobile = 'assets/icons/ic_mobile.svg';
-  static const icBills = 'assets/icons/ic_bills.svg';
-  static const icQr = 'assets/icons/ic_qr.svg';
-  static const icCard = 'assets/icons/ic_card.svg';
-  static const icHistory = 'assets/icons/ic_history.svg';
-  static const icCashback = 'assets/icons/ic_cashback.svg';
-  static const icProfile = 'assets/icons/ic_profile.svg';
+  // Ikonkalar
+  static const icHome = 'assets/icons/home.svg';
+  static const icTransfer = 'assets/icons/transfer.svg';
+  static const icMobile = 'assets/icons/mobile.svg';
+  static const icBills = 'assets/icons/utilities.svg';
+  static const icPayments = 'assets/icons/payments.svg';
+  static const icQr = 'assets/icons/qr.svg';
+  static const icCard = 'assets/icons/cards.svg';
+  static const icHistory = 'assets/icons/history.svg';
+  static const icAnalytics = 'assets/icons/analytics.svg';
+  static const icCashback = 'assets/icons/gift.svg';
+  static const icProfile = 'assets/icons/profile.svg';
 
-  static const bannerPayments = 'assets/banners/promo_payments_bg.svg';
-  static const bannerTransfers = 'assets/banners/promo_transfers_bg.svg';
+  // Bannerlar (faqat fon; matn [PromoBanner] da)
+  static const bannerWelcome = 'assets/banners/banner_welcome.svg';
+  static const bannerTransfer = 'assets/banners/banner_transfer.svg';
+  static const bannerSafety = 'assets/banners/banner_safety.svg';
+  static const bannerRewards = 'assets/banners/banner_rewards.svg';
 }

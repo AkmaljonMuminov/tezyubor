@@ -63,7 +63,7 @@ class ReceiptScreen extends StatelessWidget {
                       Icon(
                         ok ? Icons.check_circle : Icons.cancel,
                         size: 72,
-                        color: ok ? AppColors.primary : AppColors.error,
+                        color: ok ? AppColors.success : AppColors.error,
                       ),
                       const SizedBox(height: 12),
                       Text(

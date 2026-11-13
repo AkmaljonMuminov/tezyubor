@@ -8,6 +8,7 @@ import '../../core/l10n/strings.dart';
 import '../../core/money.dart';
 import '../../core/router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/brand_widgets.dart';
 import '../../shared/service_icon.dart';
 import '../../shared/test_mode_banner.dart';
 import '../../shared/txn_tile.dart';
@@ -41,14 +42,27 @@ class HomeScreen extends ConsumerWidget {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(20),
                   children: [
-                    const Text(
-                      AppBrand.name,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primaryDark),
+                    const Row(
+                      children: [
+                        BrandLogo(size: 38),
+                        SizedBox(width: 10),
+                        Text(
+                          AppBrand.name,
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.navy),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     _BalanceCard(cards: cards),
                     const SizedBox(height: 20),
                     const _QuickActions(),
+                    const SizedBox(height: 20),
+                    const PromoBanner(
+                      asset: AppAssets.bannerWelcome,
+                      eyebrow: AppBrand.wordmark,
+                      title: Strings.bannerWelcomeTitle,
+                      subtitle: Strings.bannerWelcomeSubtitle,
+                    ),
                     const SizedBox(height: 24),
                     Text(Strings.myCards, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 8),
@@ -109,8 +123,14 @@ class _BalanceCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.navyDeep, AppColors.navyMid, Color(0xFF102D9B)],
+        ),
         borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.cyanLine),
+        boxShadow: const [BoxShadow(color: AppColors.royalShadow, blurRadius: 18, offset: Offset(0, 8))],
       ),
       child: Row(
         children: [
@@ -118,7 +138,7 @@ class _BalanceCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(Strings.totalBalance, style: TextStyle(color: Color(0xFFE9FFF0))),
+                const Text(Strings.totalBalance, style: TextStyle(color: AppColors.paleBlue)),
                 const SizedBox(height: 8),
                 Text(
                   text,
@@ -130,7 +150,7 @@ class _BalanceCard extends ConsumerWidget {
           IconButton(
             tooltip: Strings.hideBalance,
             onPressed: () => ref.read(balanceHiddenProvider.notifier).state = !hidden,
-            icon: Icon(hidden ? Icons.visibility_off : Icons.visibility, color: Colors.white),
+            icon: Icon(hidden ? Icons.visibility_off : Icons.visibility, color: AppColors.goldLight),
           ),
         ],
       ),

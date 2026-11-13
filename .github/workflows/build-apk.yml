@@ -44,7 +44,14 @@ jobs:
           grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml || \
             sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|' android/app/src/main/AndroidManifest.xml
 
+      - name: Launcher ikonkalarini joylash
+        run: cp -r launcher_res/. android/app/src/main/res/
+
       - run: flutter pub get
+
+      - name: Statik tahlil (natijasi build'ni to'xtatmaydi)
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
 
       - name: Testlar
         run: flutter test

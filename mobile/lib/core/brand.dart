@@ -5,6 +5,8 @@ class AppBrand {
   static const String name = 'Tezyubor';
   static const String tagline = "To'lovlar va pul o'tkazmalari";
   static const String appId = 'uz.tezyubor.app';
+  static const String wordmark = 'TEZYUBOR';
+  static const String slogan = 'Tez. Oson. Ishonchli.';
 }
 
 /// `--dart-define=API_MODE=mock` (standart) — backendsiz test rejimi.

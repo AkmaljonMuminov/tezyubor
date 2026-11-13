@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/router.dart';
 import '../../../core/validators.dart';
-import '../../../shared/test_mode_banner.dart';
+import '../../../shared/brand_widgets.dart';
 import '../data/auth_repository.dart';
 
 class PhoneScreen extends ConsumerStatefulWidget {
@@ -55,17 +55,23 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            const TestModeBanner(),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+      body: Column(
+        children: [
+          const AuthHeader(),
+          Expanded(
+            child: SafeArea(
+              top: false,
+              // Kichik ekran + klaviatura: forma sig'masa aylanadi, tugma pastda qoladi.
+              child: LayoutBuilder(
+                builder: (context, c) => SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: (c.maxHeight - 48).clamp(0.0, double.infinity)),
+                    child: IntrinsicHeight(
+                      child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
                     Text(Strings.phoneTitle, style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 24),
                     TextField(
@@ -97,10 +103,13 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                     ),
                   ],
                 ),
+                    ),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
