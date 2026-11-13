@@ -2,6 +2,8 @@ name: Build APK
 
 on:
   push:
+    branches: [main, "work/phase-4-production"]
+  pull_request:
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -14,6 +16,11 @@ on:
         description: "Faqat real rejim uchun: backend manzili (https://...)"
         default: ""
         type: string
+      build_type:
+        description: "test — o‘rnatish uchun, release — signing secrets bilan"
+        default: test
+        type: choice
+        options: [test, release]
 
 jobs:
   apk:
@@ -49,24 +56,77 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Statik tahlil (natijasi build'ni to'xtatmaydi)
+      - name: Statik tahlil
         run: flutter analyze --no-fatal-infos
-        continue-on-error: true
 
       - name: Testlar
         run: flutter test
-        continue-on-error: true
 
       - name: APK yig'ish
         env:
           API_MODE: ${{ github.event.inputs.api_mode || 'mock' }}
           API_BASE_URL: ${{ github.event.inputs.api_base_url }}
+          BUILD_TYPE: ${{ github.event.inputs.build_type || 'test' }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
         run: |
+          if [ "$API_MODE" = "real" ]; then
+            case "$API_BASE_URL" in
+              https://*) ;;
+              *) echo "API_MODE=real uchun HTTPS API_BASE_URL majburiy"; exit 1 ;;
+            esac
+          fi
           DEFINES="--dart-define=API_MODE=$API_MODE"
           if [ -n "$API_BASE_URL" ]; then DEFINES="$DEFINES --dart-define=API_BASE_URL=$API_BASE_URL"; fi
-          flutter build apk --release $DEFINES
+          if [ "$BUILD_TYPE" = "release" ]; then
+            python3 - <<'PY'
+          import base64, os
+          from pathlib import Path
+          required = ("ANDROID_KEYSTORE_BASE64", "ANDROID_KEY_ALIAS", "ANDROID_KEY_PASSWORD", "ANDROID_STORE_PASSWORD")
+          missing = [name for name in required if not os.environ.get(name)]
+          if missing:
+              raise SystemExit("Release signing uchun GitHub Actions Secrets yetishmaydi: " + ", ".join(missing))
+          Path("android/app/tezyubor-release.jks").write_bytes(
+              base64.b64decode(os.environ["ANDROID_KEYSTORE_BASE64"], validate=True)
+          )
+          gradle = Path("android/app/build.gradle.kts")
+          text = gradle.read_text()
+          debug = 'signingConfig = signingConfigs.getByName("debug")'
+          if debug not in text or "    buildTypes {" not in text:
+              raise SystemExit("Kutilgan Flutter Gradle signing bloki topilmadi")
+          signing = """    signingConfigs {
+                  create("release") {
+                      storeFile = file("tezyubor-release.jks")
+                      storePassword = System.getenv("ANDROID_STORE_PASSWORD") ?: error("Missing signing secret")
+                      keyAlias = System.getenv("ANDROID_KEY_ALIAS") ?: error("Missing signing secret")
+                      keyPassword = System.getenv("ANDROID_KEY_PASSWORD") ?: error("Missing signing secret")
+                  }
+              }
+          """
+          text = text.replace("    buildTypes {", signing + "    buildTypes {", 1)
+          text = text.replace(debug, 'signingConfig = signingConfigs.getByName("release")', 1)
+          gradle.write_text(text)
+          PY
+            flutter build apk --release $DEFINES
+            APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+            ARTIFACT_NAME="tezyubor-release-apk"
+          else
+            flutter build apk --debug $DEFINES
+            APK_PATH="build/app/outputs/flutter-apk/app-debug.apk"
+            ARTIFACT_NAME="tezyubor-test-apk"
+          fi
+          sha256sum "$APK_PATH" > "$APK_PATH.sha256"
+          echo "APK_PATH=$APK_PATH" >> "$GITHUB_ENV"
+          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> "$GITHUB_ENV"
+
+      - name: APK SHA-256
+        run: test -s "$APK_PATH.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tezyubor-apk
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          name: ${{ env.ARTIFACT_NAME }}
+          path: |
+            mobile/${{ env.APK_PATH }}
+            mobile/${{ env.APK_PATH }}.sha256
