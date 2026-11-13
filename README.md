@@ -2,12 +2,13 @@
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
+> **Loyiha yopildi, ammo ish to'xtamaydi.**
+
 ## Holat (3-bosqich)
 
 | Qism | Holat |
 |---|---|
 | Grafikalar: premium kit (navy/royal/oltin, T logotip, 25 ikonka, bannerlar, launcher ikonka) | ✅ Asl kit `design/premium_kit`, ilova uchun tozalangani `mobile/assets` (SVG ichida matn/pattern/filtr yo'q — Flutter chizmaydi). Telefon ekranida ko'rinishi odam ko'zi bilan tekshirilmagan |
-Loyiha yopildi 
 | Flutter: splash, telefon, OTP, PIN yaratish/kirish | ⚠️ Yozilgan, **ishga tushirib tekshirilmagan** |
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
 | Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
@@ -81,4 +82,3 @@ Ikonka PNG'lari: `assets/brand/app_icon*.svg` ni 1024px PNG ga eksport qilib `fl
 
 ## Xavfsizlik qoidalari
 `.env` va kalitlar Git'ga qo'shilmaydi (`.gitignore`). Maxfiy qiymatlar kodda yo'q: `JWT_SECRET`/`OTP_SECRET` bo'lmasa backend ishga tushmaydi.
-Loyiha yopildi 
