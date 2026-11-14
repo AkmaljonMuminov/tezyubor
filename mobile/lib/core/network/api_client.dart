@@ -31,24 +31,55 @@ class ApiClient {
   final Duration timeout;
   final http.Client _client;
 
-  /// POST. Javob tanasi bo'sh bo'lsa (204) `null` qaytadi.
+  /// POST. Javob tanasi bo'sh bo'lsa (204) `null` qaytadi. [headers] — qo'shimcha sarlavhalar (masalan `Idempotency-Key`).
   Future<Map<String, dynamic>?> post(
     String path, {
     Map<String, dynamic>? body,
     String? bearer,
+    Map<String, String>? headers,
+  }) =>
+      _send('POST', path, body: body ?? const <String, dynamic>{}, bearer: bearer, headers: headers);
+
+  Future<Map<String, dynamic>?> get(
+    String path, {
+    String? bearer,
+    Map<String, String>? query,
+    Map<String, String>? headers,
+  }) =>
+      _send('GET', path, bearer: bearer, query: query, headers: headers);
+
+  Future<Map<String, dynamic>?> delete(String path, {String? bearer, Map<String, String>? headers}) =>
+      _send('DELETE', path, bearer: bearer, headers: headers);
+
+  Future<Map<String, dynamic>?> _send(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    String? bearer,
+    Map<String, String>? query,
+    Map<String, String>? headers,
   }) async {
-    final uri = Uri.parse('$baseUrl$path');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
+    var uri = Uri.parse('$baseUrl$path');
+    if (query != null && query.isNotEmpty) uri = uri.replace(queryParameters: query);
+    final allHeaders = <String, String>{
       'Accept': 'application/json',
+      if (body != null) 'Content-Type': 'application/json',
       if (bearer != null) 'Authorization': 'Bearer $bearer',
+      ...?headers,
     };
 
     http.Response res;
     try {
-      res = await _client
-          .post(uri, headers: headers, body: jsonEncode(body ?? const <String, dynamic>{}))
-          .timeout(timeout);
+      final Future<http.Response> call;
+      switch (method) {
+        case 'GET':
+          call = _client.get(uri, headers: allHeaders);
+        case 'DELETE':
+          call = _client.delete(uri, headers: allHeaders);
+        default:
+          call = _client.post(uri, headers: allHeaders, body: jsonEncode(body ?? const <String, dynamic>{}));
+      }
+      res = await call.timeout(timeout);
     } on TimeoutException {
       throw const ApiException(status: 0, code: 'NETWORK', message: "Server javob bermadi. Qayta urinib ko'ring");
     } on http.ClientException {
