@@ -128,7 +128,7 @@ Tekshiruv manbalari: (1) GitHub Actions `Backend tests` (PostgreSQL 16 xizmati b
 **Haligacha ochiq (halol ro'yxat):**
 - Haqiqiy bank/protsessing, Uzcard/Humo ulanishi — shartnoma va hujjat yo'q. Hamyon faqat sandbox.
 - Komissiya, limit, boshlang'ich sinov balans qiymatlari — o'rinbosar, biznes qarori kerak.
-- Mobil kod bu muhitda yig'ilmaydi (Flutter/Dart yo'q); `flutter analyze/test` natijasi faqat GitHub Actions'da ko'rinadi. Mobil bosqich (commitlar 40d2f0f, b763907, 7353a44) hali **bir marta ham kompilyatsiya qilinmagan**: 
+- Mobil kod bu muhitda yig'ilmaydi (Flutter/Dart yo'q); `flutter analyze/test` natijasi faqat GitHub Actions'da ko'rinadi (run 43575565749 da yashil).
 - Build APK workflow'ida `flutter analyze` va `flutter test` `continue-on-error`, ya'ni ular qizil bo'lsa ham APK yig'iladi — natijani Actions logidan alohida o'qish kerak.
 - Qurilmadagi sinov (barmoq izi, haqiqiy Android) umuman bajarilmagan.
 - `work/phase-4-production` bilan birlashtirishda faqat CI fayllari (`.github/workflows/backend-tests.yml`, `build-apk.yml`) to'qnashadi (men `feature/**` triggerini qo'shganman, u CI'ni qayta yozgan); `git merge-tree` bo'yicha README va `docs/` avtomatik birlashadi, lekin matn mazmunini (ikki tomon holat jadvalini) birlashtirgandan keyin ko'zdan kechirish kerak.
