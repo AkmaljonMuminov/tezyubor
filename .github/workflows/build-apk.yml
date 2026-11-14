@@ -44,6 +44,31 @@ jobs:
           grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml || \
             sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|' android/app/src/main/AndroidManifest.xml
 
+      - name: Android — barmoq izi (local_auth) va xavfsizlik sozlamalari
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          # 1) Barmoq izi ruxsati
+          grep -q 'android.permission.USE_BIOMETRIC' "$MANIFEST" || \
+            sed -i 's|<application|<uses-permission android:name="android.permission.USE_BIOMETRIC"/>\n    <application|' "$MANIFEST"
+          # 2) Zaxira nusxaga (cloud backup) tushmasin: secure storage kalitlari boshqa qurilmada baribir ochilmaydi
+          grep -q 'android:allowBackup' "$MANIFEST" || \
+            sed -i 's|<application|<application android:allowBackup="false"|' "$MANIFEST"
+          # 3) local_auth FragmentActivity talab qiladi
+          ACT=$(find android/app/src/main -name 'MainActivity.*' | head -n1)
+          sed -i 's/FlutterActivity/FlutterFragmentActivity/g' "$ACT"
+          # 4) BiometricPrompt AppCompat mavzusini talab qiladi
+          for f in android/app/src/main/res/values/styles.xml android/app/src/main/res/values-night/styles.xml; do
+            [ -f "$f" ] && sed -i -E 's#@android:style/Theme\.(Light|Black)(\.NoTitleBar)?#Theme.AppCompat.DayNight.NoActionBar#g' "$f"
+          done
+          # Tekshiruv: shablon o'zgargan bo'lsa ogohlantiramiz (barmoq izi PIN'ga qaytadi, ilova yiqilmaydi)
+          grep -q 'USE_BIOMETRIC' "$MANIFEST" || echo "::warning::USE_BIOMETRIC manifestga qo'shilmadi"
+          grep -q 'allowBackup="false"' "$MANIFEST" || echo "::warning::allowBackup o'chirilmadi"
+          grep -q 'FlutterFragmentActivity' "$ACT" || echo "::warning::MainActivity FlutterFragmentActivity emas — barmoq izi ishlamaydi"
+          grep -rq 'Theme.AppCompat' android/app/src/main/res/values/styles.xml || echo "::warning::styles.xml AppCompat'ga o'tmadi — barmoq izi ishlamaydi"
+          echo "--- AndroidManifest.xml ---"; cat "$MANIFEST"
+          echo "--- $ACT ---"; cat "$ACT"
+          echo "--- styles.xml ---"; cat android/app/src/main/res/values/styles.xml
+
       - name: Launcher ikonkalarini joylash
         run: cp -r launcher_res/. android/app/src/main/res/
 
