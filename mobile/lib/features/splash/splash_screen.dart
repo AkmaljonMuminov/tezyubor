@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/assets.dart';
 import '../../core/brand.dart';
 import '../../core/router.dart';
 import '../../core/theme/app_colors.dart';
@@ -33,6 +34,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return const Scaffold(
       backgroundColor: AppColors.navyDeep,
       body: NavyBackground(
+        asset: AppAssets.splashBg,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -51,7 +53,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               SizedBox(height: 8),
               Text(
                 AppBrand.slogan,
-                style: TextStyle(color: AppColors.goldLight, fontSize: 16, letterSpacing: 1.5),
+                style: TextStyle(color: AppColors.cyan, fontSize: 16, letterSpacing: 1.5),
               ),
             ],
           ),

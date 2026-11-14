@@ -6,7 +6,7 @@ import '../core/brand.dart';
 import '../core/theme/app_colors.dart';
 import 'test_mode_banner.dart';
 
-/// Tasdiqlangan Tezyubor ikonkasi (T belgisi).
+/// ORVEX PAY logotipi (logo_mark).
 class BrandLogo extends StatelessWidget {
   const BrandLogo({super.key, this.size = 96});
 
@@ -24,17 +24,18 @@ class BrandLogo extends StatelessWidget {
   }
 }
 
-/// Midnight navy gradient fon (premium_navy.svg). [child] o'lchamni belgilaydi; Scaffold ichida butun ekranni to'ldiradi.
+/// Midnight navy gradient fon (standart: premium_navy.svg). [child] o'lchamni belgilaydi; Scaffold ichida butun ekranni to'ldiradi.
 class NavyBackground extends StatelessWidget {
-  const NavyBackground({super.key, this.child});
+  const NavyBackground({super.key, this.child, this.asset = AppAssets.bgNavy});
 
   final Widget? child;
+  final String asset;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(child: SvgPicture.asset(AppAssets.bgNavy, fit: BoxFit.cover)),
+        Positioned.fill(child: SvgPicture.asset(asset, fit: BoxFit.cover)),
         if (child != null) child!,
       ],
     );
@@ -76,7 +77,7 @@ class AuthHeader extends StatelessWidget {
                   SizedBox(height: 4),
                   Text(
                     AppBrand.slogan,
-                    style: TextStyle(color: AppColors.goldLight, fontSize: 13, letterSpacing: 1),
+                    style: TextStyle(color: AppColors.cyan, fontSize: 13, letterSpacing: 1),
                   ),
                 ],
                 SizedBox(height: compact ? 12 : 22),

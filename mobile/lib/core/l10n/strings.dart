@@ -5,7 +5,7 @@ class Strings {
   static const testMode = "TEST REJIMI — haqiqiy SMS va to'lov yo'q";
   static const testWalletMode = "TEST HAMYON — balans va to'lovlar soxta, haqiqiy pul emas";
   static const bannerWelcomeTitle = 'Xush kelibsiz!';
-  static const bannerWelcomeSubtitle = 'Tez. Oson. Ishonchli.';
+  static const bannerWelcomeSubtitle = 'Tez. Xavfsiz. Qulay.';
   static const phoneTitle = 'Telefon raqamingiz';
   static const phoneHint = 'XX XXX XX XX';
   static const phoneError = "Telefon raqami noto'g'ri";
@@ -20,7 +20,7 @@ class Strings {
   static const pinMismatch = 'PIN-kodlar mos kelmadi, qaytadan urinib ko\'ring';
   static const pinWrong = "PIN-kod noto'g'ri";
   static const genericError = "Xatolik yuz berdi. Qayta urinib ko'ring";
-  static const biometricReason = 'Tezyubor ilovasiga kirish uchun tasdiqlang';
+  static const biometricReason = 'ORVEX PAY ilovasiga kirish uchun tasdiqlang';
   static const biometricLogin = 'Barmoq izi bilan kirish';
   static const biometricSetting = 'Barmoq izi bilan kirish';
   static const biometricSettingHint = "Faqat ilovani ochish uchun. Pul o'tkazish har doim PIN bilan tasdiqlanadi";

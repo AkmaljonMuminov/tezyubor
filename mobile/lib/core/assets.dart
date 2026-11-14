@@ -1,10 +1,11 @@
-/// Grafika yo'llari. Manba: `design/premium_kit` (Flutter uchun tozalangan: SVG ichida matn, pattern va filtr yo'q —
+/// Grafika yo'llari. Manba: `design/orvex_pay_kit` (Flutter uchun tozalangan: SVG ichida matn, pattern va filtr yo'q —
 /// matnlar vidjetlarda beriladi). Ikonkalarda oltin gradient SVG'ning o'zida; ularni [ServiceIcon] navy fonda ko'rsatadi.
 class AppAssets {
   const AppAssets._();
 
   // Brend
-  static const logo = 'assets/brand/logo.png'; // tasdiqlangan ikonka (yumaloq burchakli, shaffof)
+  static const logo = 'assets/brand/logo.png'; // ORVEX PAY logo_mark.svg dan chizilgan (yumaloq burchakli, shaffof)
+  static const splashBg = 'assets/brand/splash_bg.svg'; // splash_screen.svg ning matnsiz, belgisiz foni
   static const bgNavy = 'assets/backgrounds/premium_navy.svg';
 
   // Ikonkalar

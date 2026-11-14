@@ -2,11 +2,12 @@
 class AppBrand {
   const AppBrand._();
 
-  static const String name = 'Tezyubor';
+  static const String name = 'ORVEX PAY';
   static const String tagline = "To'lovlar va pul o'tkazmalari";
+  /// Android applicationId. Brend almashganda ham O'ZGARMAYDI (yangilanish/ma'lumot uzilmasligi uchun).
   static const String appId = 'uz.tezyubor.app';
-  static const String wordmark = 'TEZYUBOR';
-  static const String slogan = 'Tez. Oson. Ishonchli.';
+  static const String wordmark = 'ORVEX PAY';
+  static const String slogan = 'TEZ • XAVFSIZ • QULAY';
 }
 
 /// `--dart-define=API_MODE=mock` (standart) — backendsiz test rejimi.

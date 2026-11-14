@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Tezyubor premium palitrasi (`design/premium_kit/docs/DESIGN_SYSTEM.md`):
+/// ORVEX PAY palitrasi (`design/orvex_pay_kit/docs/DESIGN_SYSTEM.md`):
 /// midnight navy fon, royal blue asosiy tugmalar, cyan fokus, oltin faqat ajratib ko'rsatish uchun.
 class AppColors {
   const AppColors._();
