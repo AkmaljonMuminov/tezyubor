@@ -11,7 +11,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
 | Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
 | Flutter: monitoring (oylik tushum/xarajat, filtr, kunlar bo'yicha), so'nggi qabul qiluvchilar, kartalar orasida o'tkazma | ⚠️ Yozilgan (mock), ishga tushirib tekshirilmagan |
-| Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Mobil chiqish hozircha faqat qurilmadagi tokenlarni o'chiradi. Server endpointi tayyor (`POST /v1/auth/logout`), mobilga ulash — keyingi bosqichda (shu qator o'zgarmaguncha serverda sessiya yopilmaydi) |
+| Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Chiqish endi serverga ham `POST /v1/auth/logout` yuboradi (internet bo'lmasa qurilma baribir tozalanadi). Lokal commit, CI'da hali tekshirilmagan |
 | Flutter: To'lov bo'limi — qidiruv, 20 kategoriya, tanlangan to'lovlar, mobil operatorlar (telefon qatori), kommunal variantlar, elektr uchun hudud + ETK tanlash, xizmat bo'yicha tarix | ⚠️ Yozilgan (mock). Operator/xizmat nomlari faqat ko'rsatish uchun, ular bilan haqiqiy integratsiya yo'q. ETK ro'yxati faqat Samarqand uchun test ma'lumoti, qolgan hududlarda "tez orada"; boshqa kategoriyalar "Tez orada" |
 | Flutter: chek — to'lovdan keyin va tarixdan ochiladi, tafsilotlar (karta maskalangan), matnni nusxalash | ⚠️ Yozilgan. Test rejimida chekda "TEST CHEK — haqiqiy to'lov emas" yozuvi bor. PDF/rasm sifatida ulashish yo'q |
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — kirish (haqiqiy SMS kod); hamyon baribir TEST | ⚠️ Yozilgan, klient testlari soxta HTTP bilan. Haqiqiy backend + telefon bilan **birga sinalmagan** |
@@ -20,7 +20,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Backend: SMS yuborish (Eskiz.uz) — token, qayta urinish, shablon, sutkalik limit, xatoda limitni qaytarish | ⚠️ Yozilgan, testlar (soxta HTTP bilan). **Haqiqiy Eskiz hisobi bilan jonli sinalmagan** — `python3 -m app.tools.sms_check <telefon>` bilan tekshiring |
 | Backend HTTP qatlami (`router.py`, `main.py`): OTP → tasdiqlash → PIN → token aylanishi, xato formati, productionda `/docs` yopiq | ✅ CI'da haqiqiy FastAPI (`TestClient`) bilan sinalgan, SMS soxta yuboruvchi bilan |
 | Backend: karta, o'tkazma, tarix, chek | ⚠️ **SANDBOX** bor (`WALLET_ENABLED=true` bilan yoqiladi, standart o'chiq): PAN saqlanmaydi, CVV olinmaydi, summa/komissiyani server hisoblaydi, `Idempotency-Key`, serverda PIN bilan tasdiq, atomik pul harakati + jurnal. CI'da PostgreSQL bilan sinalgan (parallel testlar ham). **Haqiqiy bank yo'q — barcha pul sinov qiymat.** To'lovlar (kommunal/mobil) backendda YO'Q. Mobil hamyon hali ulanmagan (mock) |
-| Biometrika (mobil) | 🚧 Ishlanmoqda (`local_auth`, PIN zaxira bilan). Hali tugamagan va qurilmada sinalmagan |
+| Biometrika (mobil) | ⚠️ Yozilgan (`local_auth`, PIN zaxira bilan; faqat ilovani ochadi, pul harakati serverda PIN bilan). Testlar yozilgan, lekin CI'da hali yurmagan va haqiqiy qurilmada sinalmagan |
 | O'tkazmada PIN tasdig'i | ✅ Backendda (sandbox); mobilga ulanmagan |
 | PIN tiklash, OTP qayta yuborish | ❌ Boshlanmagan |
 | Docker (`backend/Dockerfile`), Render (`render.yaml`) | ⚠️ CI'da image yig'iladi va `/health` tekshiriladi; **jonli deploy qilinmagan** |

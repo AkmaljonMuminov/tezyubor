@@ -119,16 +119,17 @@ Tekshiruv manbai: GitHub Actions `Backend tests` (PostgreSQL 16 xizmati bilan), 
 | 3. Backend hamyon: kartalar | ✅ sandbox | PAN/CVV saqlanmaydi (A15 yopildi) |
 | 3. O'tkazma: idempotent, serverda summa/komissiya, PIN tasdiq, atomik | ✅ sandbox | A14 yopildi. PostgreSQL'da: 6 parallel o'tkazma balansdan oshmaydi; bir o'tkazma 8 parallel tasdiqda bir marta yechiladi |
 | 3. Tarix/chek | ✅ sandbox | kursor sahifalash (teng vaqtli yozuvlar bilan ham), chek faqat `completed` |
-| 4. Mobil: logout serverga | 🚧 | hali yozilmagan |
-| 4. Mobil: biometrika (PIN zaxira) | 🚧 | hali yozilmagan; qurilmada sinovsiz bo'ladi |
-| 4. Mobil: token yangilash poygasidan himoya (A8) | 🚧 | hali yozilmagan |
+| 4. Mobil: logout serverga | 🟡 yozilgan, CI'da tekshirilmagan | `HttpAuthRepository.logout()` → `POST /v1/auth/logout`; internet bo'lmasa ham qurilma tozalanadi. Testlar yozilgan (`test/biometric_test.dart`), lekin **GitHub'ga push bloklangani uchun hali bajarilmagan** |
+| 4. Mobil: biometrika (PIN zaxira) | 🟡 yozilgan, CI'da tekshirilmagan | `BiometricService` (`local_auth`), PIN ekranida avtomatik taklif + tugma, profilda yoqish. Biometrika faqat ilovani ochadi; pul harakati serverda PIN bilan. Widget testlar yozilgan. Android sozlamalari `build-apk.yml` ga qo'shilgan. **Haqiqiy qurilmada sinalmagan** |
+| 4. Mobil: token yangilash poygasidan himoya (A8) | 🟡 yozilgan, CI'da tekshirilmagan | `AuthedApiClient` (single-flight): parallel 6 so'rov → 1 ta yangilash. Hali hech bir ekran uni ishlatmaydi (hamyon mobilga ulanganda kerak bo'ladi) |
 | 4. Mobil hamyonni backendga ulash | ❌ | qilinmagan. Mobil `WalletRepository` ko'p narsani talab qiladi (kommunal to'lovlar, saralanganlar), backendda ular yo'q — alohida reja kerak |
 | 5. Yakuniy audit, PR, hisobot | ⏳ | mobil bosqichdan keyin |
 
 **Haligacha ochiq (halol ro'yxat):**
 - Haqiqiy bank/protsessing, Uzcard/Humo ulanishi — shartnoma va hujjat yo'q. Hamyon faqat sandbox.
 - Komissiya, limit, boshlang'ich sinov balans qiymatlari — o'rinbosar, biznes qarori kerak.
-- Mobil kod bu muhitda yig'ilmaydi; `flutter analyze/test` natijasi faqat GitHub Actions'da ko'rinadi.
+- Mobil kod bu muhitda yig'ilmaydi (Flutter/Dart yo'q); `flutter analyze/test` natijasi faqat GitHub Actions'da ko'rinadi. Mobil bosqich (commitlar 40d2f0f, b763907, 7353a44) hali **bir marta ham kompilyatsiya qilinmagan**: Claude GitHub App'ining yozish ruxsati yo'qolgani sabab push 403 qaytaradi.
+- Build APK workflow'ida `flutter analyze` va `flutter test` `continue-on-error`, ya'ni ular qizil bo'lsa ham APK yig'iladi — natijani Actions logidan alohida o'qish kerak.
 - Qurilmadagi sinov (barmoq izi, haqiqiy Android) umuman bajarilmagan.
 - `work/phase-4-production` bilan birlashtirishda faqat CI fayllari (`.github/workflows/backend-tests.yml`, `build-apk.yml`) to'qnashadi (men `feature/**` triggerini qo'shganman, u CI'ni qayta yozgan); `git merge-tree` bo'yicha README va `docs/` avtomatik birlashadi, lekin matn mazmunini (ikki tomon holat jadvalini) birlashtirgandan keyin ko'zdan kechirish kerak.
 - `Docker Image CI` (GitHub shablon workflow'i) tuzatilmagan (ildizda Dockerfile yo'q); phase-4 branchida u o'chirilgan.
