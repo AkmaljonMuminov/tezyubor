@@ -46,6 +46,69 @@ MIGRATIONS: list[tuple[int, str, str]] = [
         CREATE INDEX IF NOT EXISTS audit_log_user_idx ON audit_log (user_id, ts);
         """,
     ),
+    (
+        2,
+        "hamyon (sandbox): kartalar, o'tkazmalar, jurnal, karta qidiruv limiti",
+        """
+        CREATE TABLE IF NOT EXISTS cards (
+            id          uuid PRIMARY KEY,
+            user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            pan_index   text NOT NULL,                 -- HMAC(PAN). PAN va CVV bazada SAQLANMAYDI
+            bin6        text NOT NULL,
+            last4       text NOT NULL,
+            brand       text NOT NULL,
+            holder_name text NOT NULL,
+            exp_month   smallint NOT NULL,
+            exp_year    smallint NOT NULL,
+            balance     bigint NOT NULL DEFAULT 0 CHECK (balance >= 0),   -- tiyin, SANDBOX
+            is_default  boolean NOT NULL DEFAULT false,
+            status      text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'deleted')),
+            created_at  double precision NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS cards_pan_index_uq ON cards (pan_index);
+        CREATE INDEX IF NOT EXISTS cards_user_idx ON cards (user_id, status);
+
+        CREATE TABLE IF NOT EXISTS transfers (
+            id                   uuid PRIMARY KEY,
+            user_id              uuid NOT NULL REFERENCES users(id),
+            to_user_id           uuid NOT NULL REFERENCES users(id),
+            from_card_id         uuid NOT NULL REFERENCES cards(id),
+            to_card_id           uuid NOT NULL REFERENCES cards(id),
+            amount               bigint NOT NULL CHECK (amount > 0),
+            fee                  bigint NOT NULL CHECK (fee >= 0),
+            status               text NOT NULL CHECK (status IN ('pending','completed','failed','expired','cancelled')),
+            idempotency_key      text NOT NULL,
+            request_hash         text NOT NULL,
+            receiver_last4       text NOT NULL,
+            receiver_name_masked text NOT NULL,
+            created_at           double precision NOT NULL,
+            expires_at           double precision NOT NULL,
+            completed_at         double precision,
+            receipt_no           text UNIQUE,
+            failure_reason       text,
+            UNIQUE (user_id, idempotency_key)
+        );
+        CREATE INDEX IF NOT EXISTS transfers_user_created_idx ON transfers (user_id, created_at DESC, id DESC);
+        CREATE INDEX IF NOT EXISTS transfers_to_user_idx ON transfers (to_user_id, created_at DESC, id DESC);
+
+        -- Faqat qo'shiladi. Har kartaning balansi = jurnal yig'indisi (tekshiruv: tests/test_wallet_store.py)
+        CREATE TABLE IF NOT EXISTS ledger_entries (
+            id          bigserial PRIMARY KEY,
+            card_id     uuid NOT NULL REFERENCES cards(id),
+            transfer_id uuid REFERENCES transfers(id),
+            delta       bigint NOT NULL,
+            kind        text NOT NULL,
+            ts          double precision NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS ledger_card_idx ON ledger_entries (card_id);
+
+        CREATE TABLE IF NOT EXISTS card_lookups (
+            user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            ts      double precision NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS card_lookups_user_idx ON card_lookups (user_id, ts);
+        """,
+    ),
 ]
 
 TRACKING_TABLE = """

@@ -187,7 +187,7 @@ class PostgresContract(StoreContract, unittest.TestCase):
         self.db.migrate()
         with self.db.connection() as c:
             rows = c.execute("SELECT version FROM schema_migrations ORDER BY version").fetchall()
-        self.assertEqual([r["version"] for r in rows], [1])
+        self.assertEqual([r["version"] for r in rows], [1, 2])
 
     def test_audit_sink_appends_json_without_pii(self):
         sink = PgAuditSink(self.db)

@@ -16,6 +16,10 @@ from .modules.auth.service import AuthService
 from .modules.auth.sms_factory import build_sms_sender
 from .modules.auth.stores import MemoryOtpStore, MemoryRefreshStore, MemorySessionStore, MemoryUserStore
 from .modules.auth.tokens import TokenService
+from .modules.wallet.pg_store import PgWalletStore
+from .modules.wallet.router import build_router as build_wallet_router
+from .modules.wallet.service import WalletService
+from .modules.wallet.store import MemoryWalletStore
 
 
 def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
@@ -55,6 +59,13 @@ def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
     app = FastAPI(title="Tezyubor API", version="0.1.0", lifespan=lifespan, **docs)
     app.state.db = db
     app.include_router(build_router(svc, settings.otp_ttl))
+    if settings.wallet_enabled:
+        # SANDBOX: haqiqiy bank ulanmagan, barcha summalar sinov qiymat (javoblarda `sandbox: true`).
+        if not settings.test_mode:
+            logging.getLogger("tezyubor").warning("WALLET_ENABLED=true productionda: hamyon SANDBOX rejimida (haqiqiy pul emas)")
+        wallet_store = PgWalletStore(db) if db is not None else MemoryWalletStore()
+        wallet = WalletService(settings, wallet_store, svc.check_pin, audit)
+        app.include_router(build_wallet_router(wallet, svc))
 
     @app.exception_handler(AppError)
     async def _app_error(_: Request, exc: AppError):

@@ -22,6 +22,17 @@ class Settings:
     pin_lock_seconds: int = 900       # 1-blok; har keyingi blok ikki baravar uzayadi
     pin_lock_max_seconds: int = 86400  # blok muddatining yuqori chegarasi (24 soat)
     pin_pepper: str = field(default="", repr=False)  # ixtiyoriy server siri (>=32 belgi); bo'sh — pepper'siz
+    # Hamyon (SANDBOX). Haqiqiy bank/protsessing ulanmagan: barcha pul — sinov qiymat. Standart: o'chirilgan.
+    wallet_enabled: bool = False
+    card_index_key: str = field(default="", repr=False)   # PAN indeksi uchun HMAC kaliti (>=32 belgi), faqat muhitda
+    # Quyidagi qiymatlar — O'RINBOSAR (biznes qaror kutilmoqda), tiyinda (1 so'm = 100 tiyin).
+    transfer_fee_bps: int = 0                  # komissiya, 1 bps = 0,01%
+    transfer_fee_min_tiyin: int = 0
+    transfer_min_tiyin: int = 100_000          # 1 000 so'm
+    transfer_max_tiyin: int = 500_000_000      # 5 000 000 so'm
+    transfer_daily_limit_tiyin: int = 1_000_000_000   # 10 000 000 so'm / sutka
+    sandbox_start_balance_tiyin: int = 100_000_000    # yangi karta: 1 000 000 so'm TEST pul
+    transfer_confirm_ttl: int = 300
     # SMS. Productionda `none` bo'lsa ilova ishga tushmaydi. Parol repr/log'ga tushmasin (repr=False).
     sms_provider: str = "none"                       # none | eskiz
     sms_template: str = "Tezyubor tasdiqlash kodi: {code}"
@@ -54,6 +65,16 @@ class Settings:
             raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
         if self.database_url and not self.database_url.startswith(("postgres://", "postgresql://")):
             raise ConfigError("DATABASE_URL postgres:// yoki postgresql:// bilan boshlanishi kerak")
+        if self.wallet_enabled:
+            if len(self.card_index_key) < 32:
+                raise ConfigError("WALLET_ENABLED=true uchun CARD_INDEX_KEY (kamida 32 belgi) kerak")
+            if self.card_index_key in (self.jwt_secret, self.otp_secret, self.pin_pepper):
+                raise ConfigError("CARD_INDEX_KEY boshqa sirlardan farq qilishi kerak")
+        money = (self.transfer_fee_bps, self.transfer_fee_min_tiyin, self.sandbox_start_balance_tiyin)
+        if any(v < 0 for v in money) or self.transfer_fee_bps > 5000:
+            raise ConfigError("Komissiya/balans sozlamalari noto'g'ri")
+        if not 0 < self.transfer_min_tiyin <= self.transfer_max_tiyin <= self.transfer_daily_limit_tiyin:
+            raise ConfigError("O'tkazma limitlari noto'g'ri (min <= max <= kunlik)")
         if self.pin_pepper and len(self.pin_pepper) < 32:
             raise ConfigError("PIN_PEPPER kamida 32 belgi bo'lishi kerak")
         if self.pin_max_failures < 1 or self.pin_lock_seconds < 1 or self.pin_lock_max_seconds < self.pin_lock_seconds:
@@ -80,10 +101,18 @@ class Settings:
                 eskiz_from=environ.get("ESKIZ_FROM", "4546"),
                 database_url=environ.get("DATABASE_URL", ""),
                 pin_pepper=environ.get("PIN_PEPPER", ""),
+                wallet_enabled=environ.get("WALLET_ENABLED", "false").strip().lower() in ("1", "true", "yes"),
+                card_index_key=environ.get("CARD_INDEX_KEY", ""),
+                transfer_fee_bps=int(environ.get("TRANSFER_FEE_BPS", "0")),
+                transfer_fee_min_tiyin=int(environ.get("TRANSFER_FEE_MIN_TIYIN", "0")),
+                transfer_min_tiyin=int(environ.get("TRANSFER_MIN_TIYIN", "100000")),
+                transfer_max_tiyin=int(environ.get("TRANSFER_MAX_TIYIN", "500000000")),
+                transfer_daily_limit_tiyin=int(environ.get("TRANSFER_DAILY_LIMIT_TIYIN", "1000000000")),
+                sandbox_start_balance_tiyin=int(environ.get("SANDBOX_START_BALANCE_TIYIN", "100000000")),
             )
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None
         except ValueError:
-            raise ConfigError("SMS_DAILY_CAP va SMS_8HOUR_CAP butun son bo'lishi kerak") from None
+            raise ConfigError("SMS_DAILY_CAP, SMS_8HOUR_CAP va TRANSFER_*/SANDBOX_* qiymatlari butun son bo'lishi kerak") from None
         s.validate()
         return s
