@@ -54,7 +54,7 @@ class WalletHttpTests(unittest.TestCase):
         self.assertEqual(self.c.get("/v1/wallet/cards", headers=self.a["h"]).json()["cards"][0]["id"], ca["id"])
 
         lk = self.c.post("/v1/wallet/receiver/lookup", json={"pan": PAN_B}, headers=self.a["h"]).json()
-        self.assertEqual(lk["name_masked"], "A* V*")
+        self.assertEqual(lk["name_masked"], "A** V***")
 
         hdr = {**self.a["h"], "Idempotency-Key": "http-key-0001"}
         body = {"from_card_id": ca["id"], "receiver_pan": PAN_B, "amount_tiyin": 1_000_000}
