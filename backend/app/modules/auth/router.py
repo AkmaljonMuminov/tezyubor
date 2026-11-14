@@ -14,6 +14,7 @@ class OtpRequestIn(BaseModel):
 class OtpVerifyIn(BaseModel):
     challenge_id: str
     code: str
+    device_label: str | None = None   # ixtiyoriy, "Sessiyalar" ro'yxatida ko'rinadi (masalan "Pixel 7")
 
 
 class PinIn(BaseModel):
@@ -53,7 +54,7 @@ def build_router(svc: AuthService, otp_ttl: int) -> APIRouter:
 
     @r.post("/otp/verify")
     def otp_verify(body: OtpVerifyIn):
-        pair, pin_set = svc.verify_otp(body.challenge_id, body.code)
+        pair, pin_set = svc.verify_otp(body.challenge_id, body.code, body.device_label or "")
         return {**_pair(pair), "pin_set": pin_set}
 
     @r.post("/pin/set", status_code=204)
@@ -67,5 +68,29 @@ def build_router(svc: AuthService, otp_ttl: int) -> APIRouter:
     @r.post("/token/refresh")
     def token_refresh(body: RefreshIn):
         return _pair(svc.refresh(body.refresh_token))
+
+    @r.post("/logout", status_code=204)
+    def logout(body: RefreshIn):
+        svc.logout(body.refresh_token)
+
+    @r.get("/sessions")
+    def sessions(authorization: str | None = Header(default=None)):
+        rows = svc.list_sessions(_bearer(authorization))
+        return {
+            "sessions": [
+                {
+                    "id": rec.id,
+                    "device_label": rec.device_label,
+                    "created_at": int(rec.created_at),
+                    "last_used_at": int(rec.last_used_at),
+                    "current": current,
+                }
+                for rec, current in rows
+            ]
+        }
+
+    @r.delete("/sessions/{session_id}", status_code=204)
+    def revoke_session(session_id: str, authorization: str | None = Header(default=None)):
+        svc.revoke_session(_bearer(authorization), session_id)
 
     return r

@@ -19,7 +19,9 @@ class Settings:
     otp_cooldown: int = 60
     otp_max_per_hour: int = 5
     pin_max_failures: int = 5
-    pin_lock_seconds: int = 900
+    pin_lock_seconds: int = 900       # 1-blok; har keyingi blok ikki baravar uzayadi
+    pin_lock_max_seconds: int = 86400  # blok muddatining yuqori chegarasi (24 soat)
+    pin_pepper: str = field(default="", repr=False)  # ixtiyoriy server siri (>=32 belgi); bo'sh — pepper'siz
     # SMS. Productionda `none` bo'lsa ilova ishga tushmaydi. Parol repr/log'ga tushmasin (repr=False).
     sms_provider: str = "none"                       # none | eskiz
     sms_template: str = "Tezyubor tasdiqlash kodi: {code}"
@@ -52,6 +54,10 @@ class Settings:
             raise ConfigError("SMS_TEMPLATE ichida {code} bo'lishi kerak")
         if self.database_url and not self.database_url.startswith(("postgres://", "postgresql://")):
             raise ConfigError("DATABASE_URL postgres:// yoki postgresql:// bilan boshlanishi kerak")
+        if self.pin_pepper and len(self.pin_pepper) < 32:
+            raise ConfigError("PIN_PEPPER kamida 32 belgi bo'lishi kerak")
+        if self.pin_max_failures < 1 or self.pin_lock_seconds < 1 or self.pin_lock_max_seconds < self.pin_lock_seconds:
+            raise ConfigError("PIN limit sozlamalari noto'g'ri")
         if self.sms_daily_cap < 1:
             raise ConfigError("SMS_DAILY_CAP kamida 1 bo'lishi kerak")
         if self.sms_8hour_cap < 0:
@@ -73,6 +79,7 @@ class Settings:
                 eskiz_password=environ.get("ESKIZ_PASSWORD", ""),
                 eskiz_from=environ.get("ESKIZ_FROM", "4546"),
                 database_url=environ.get("DATABASE_URL", ""),
+                pin_pepper=environ.get("PIN_PEPPER", ""),
             )
         except KeyError as e:
             raise ConfigError(f"Muhit o'zgaruvchisi yo'q: {e.args[0]}") from None

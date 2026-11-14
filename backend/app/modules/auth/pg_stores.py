@@ -3,7 +3,7 @@ hech qachon satrga qo'shilmaydi."""
 import uuid
 
 from ...db import Database
-from .stores import OtpChallenge, RefreshRecord, User
+from .stores import OtpChallenge, PinAttempt, RefreshRecord, SessionRecord, User, lock_duration
 
 _DAY = 86400
 
@@ -22,6 +22,7 @@ class PgUserStore:
             pin_hash=r["pin_hash"],
             pin_failures=r["pin_failures"],
             pin_locked_until=r["pin_locked_until"],
+            pin_lock_level=r["pin_lock_level"],
         )
 
     def get(self, user_id: str) -> User | None:
@@ -48,9 +49,48 @@ class PgUserStore:
     def save(self, user: User) -> None:
         with self._db.connection() as c:
             c.execute(
-                "UPDATE users SET pin_hash = %s, pin_failures = %s, pin_locked_until = %s WHERE id = %s",
-                (user.pin_hash, user.pin_failures, user.pin_locked_until, uuid.UUID(user.id)),
+                "UPDATE users SET pin_hash = %s, pin_failures = %s, pin_locked_until = %s, pin_lock_level = %s "
+                "WHERE id = %s",
+                (user.pin_hash, user.pin_failures, user.pin_locked_until, user.pin_lock_level, uuid.UUID(user.id)),
             )
+
+    def begin_pin_attempt(self, user_id, now, max_failures, base_lock, max_lock):
+        """Atomik: qator `FOR UPDATE` bilan qulflanadi, shuning uchun parallel so'rovlar navbat bilan sanaladi."""
+        with self._db.connection() as c:
+            r = c.execute(
+                "SELECT pin_failures, pin_locked_until, pin_lock_level FROM users WHERE id = %s FOR UPDATE",
+                (uuid.UUID(user_id),),
+            ).fetchone()
+            if r is None:
+                return PinAttempt(False)
+            if now < r["pin_locked_until"]:
+                return PinAttempt(False, retry_after=int(r["pin_locked_until"] - now) + 1)
+            failures = r["pin_failures"] + 1
+            if failures >= max_failures:
+                dur = lock_duration(r["pin_lock_level"], base_lock, max_lock)
+                c.execute(
+                    "UPDATE users SET pin_failures = 0, pin_lock_level = pin_lock_level + 1, pin_locked_until = %s "
+                    "WHERE id = %s",
+                    (now + dur, uuid.UUID(user_id)),
+                )
+                return PinAttempt(True, attempts_left=0, locked_now=True, retry_after=dur)
+            c.execute("UPDATE users SET pin_failures = %s WHERE id = %s", (failures, uuid.UUID(user_id)))
+            return PinAttempt(True, attempts_left=max_failures - failures)
+
+    def reset_pin_state(self, user_id):
+        with self._db.connection() as c:
+            c.execute(
+                "UPDATE users SET pin_failures = 0, pin_lock_level = 0, pin_locked_until = 0 WHERE id = %s",
+                (uuid.UUID(user_id),),
+            )
+
+    def set_pin_hash(self, user_id, pin_hash, only_if_unset=False):
+        with self._db.connection() as c:
+            cond = " AND pin_hash IS NULL" if only_if_unset else ""
+            cur = c.execute(
+                "UPDATE users SET pin_hash = %s WHERE id = %s" + cond, (pin_hash, uuid.UUID(user_id))
+            )
+            return cur.rowcount == 1
 
 
 class PgRefreshStore:
@@ -91,21 +131,46 @@ class PgRefreshStore:
 
 
 class PgOtpStore:
-    """OTP urinishlari xotirada (2 daqiqalik, restartda yo'qolsa foydalanuvchi qayta so'raydi).
-    SMS so'rovlari soni (telefon va umumiy limit) bazada: restart limitni nolga tushirib yubormasin."""
+    """OTP challenge'lar va SMS so'rovlari soni bazada: restart yoki bir necha server nusxasi bo'lsa ham
+    kod ishlaydi, urinish va SMS limitlari nolga tushib ketmaydi."""
 
     def __init__(self, db: Database):
         self._db = db
-        self._challenges: dict[str, OtpChallenge] = {}
 
     def put(self, challenge_id, ch):
-        self._challenges[challenge_id] = ch
+        with self._db.connection() as c:
+            c.execute(
+                "INSERT INTO otp_challenges (challenge_id, phone, code_hash, expires_at, attempts) "
+                "VALUES (%s, %s, %s, %s, %s) "
+                "ON CONFLICT (challenge_id) DO UPDATE SET phone = EXCLUDED.phone, code_hash = EXCLUDED.code_hash, "
+                "expires_at = EXCLUDED.expires_at, attempts = EXCLUDED.attempts",
+                (challenge_id, ch.phone, ch.code_hash, ch.expires_at, ch.attempts),
+            )
+            # Muddati o'tganiga 1 kun bo'lganlarni tozalash (jadval o'smasin)
+            c.execute("DELETE FROM otp_challenges WHERE expires_at < %s", (ch.expires_at - _DAY,))
 
     def get(self, challenge_id):
-        return self._challenges.get(challenge_id)
+        with self._db.connection() as c:
+            r = c.execute("SELECT * FROM otp_challenges WHERE challenge_id = %s", (challenge_id,)).fetchone()
+        if r is None:
+            return None
+        return OtpChallenge(r["phone"], r["code_hash"], r["expires_at"], r["attempts"])
 
     def delete(self, challenge_id):
-        self._challenges.pop(challenge_id, None)
+        with self._db.connection() as c:
+            c.execute("DELETE FROM otp_challenges WHERE challenge_id = %s", (challenge_id,))
+
+    def bump_attempts(self, challenge_id):
+        with self._db.connection() as c:
+            r = c.execute(
+                "UPDATE otp_challenges SET attempts = attempts + 1 WHERE challenge_id = %s RETURNING attempts",
+                (challenge_id,),
+            ).fetchone()
+        return None if r is None else r["attempts"]
+
+    def consume(self, challenge_id):
+        with self._db.connection() as c:
+            return c.execute("DELETE FROM otp_challenges WHERE challenge_id = %s", (challenge_id,)).rowcount == 1
 
     def request_times(self, phone):
         with self._db.connection() as c:
@@ -124,4 +189,73 @@ class PgOtpStore:
                 "DELETE FROM sms_requests WHERE id = "
                 "(SELECT id FROM sms_requests WHERE phone = %s AND ts = %s LIMIT 1)",
                 (phone, ts),
+            )
+
+
+class PgSessionStore:
+    def __init__(self, db: Database):
+        self._db = db
+
+    @staticmethod
+    def _rec(r) -> SessionRecord:
+        return SessionRecord(
+            id=r["id"],
+            user_id=str(r["user_id"]),
+            device_label=r["device_label"],
+            created_at=r["created_at"],
+            last_used_at=r["last_used_at"],
+            revoked=r["revoked_at"] is not None,
+        )
+
+    def create(self, rec):
+        with self._db.connection() as c:
+            c.execute(
+                "INSERT INTO auth_sessions (id, user_id, device_label, created_at, last_used_at) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                (rec.id, uuid.UUID(rec.user_id), rec.device_label, rec.created_at, rec.last_used_at),
+            )
+
+    def touch(self, session_id, now):
+        with self._db.connection() as c:
+            c.execute(
+                "UPDATE auth_sessions SET last_used_at = %s WHERE id = %s AND revoked_at IS NULL", (now, session_id)
+            )
+
+    def is_active(self, session_id):
+        with self._db.connection() as c:
+            r = c.execute("SELECT 1 AS ok FROM auth_sessions WHERE id = %s AND revoked_at IS NULL", (session_id,)).fetchone()
+        return r is not None
+
+    def list_active(self, user_id):
+        with self._db.connection() as c:
+            rows = c.execute(
+                "SELECT * FROM auth_sessions WHERE user_id = %s AND revoked_at IS NULL ORDER BY last_used_at DESC",
+                (uuid.UUID(user_id),),
+            ).fetchall()
+        return [self._rec(r) for r in rows]
+
+    def revoke(self, session_id, user_id):
+        with self._db.connection() as c:
+            cur = c.execute(
+                "UPDATE auth_sessions SET revoked_at = extract(epoch from now()) "
+                "WHERE id = %s AND user_id = %s AND revoked_at IS NULL",
+                (session_id, uuid.UUID(user_id)),
+            )
+            return cur.rowcount == 1
+
+
+class PgAuditSink:
+    """audit_log jadvaliga faqat qo'shiladi (o'chirish/o'zgartirish kodda yo'q)."""
+
+    def __init__(self, db: Database):
+        self._db = db
+
+    def write(self, ev):
+        from psycopg.types.json import Jsonb
+
+        user_id = ev.fields.get("user_id")
+        with self._db.connection() as c:
+            c.execute(
+                "INSERT INTO audit_log (ts, event, user_id, fields) VALUES (%s, %s, %s, %s)",
+                (ev.ts, ev.event, None if user_id is None else str(user_id), Jsonb(ev.fields)),
             )

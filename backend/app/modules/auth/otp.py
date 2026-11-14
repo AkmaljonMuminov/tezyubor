@@ -114,12 +114,17 @@ class OtpService:
         if self._clock() >= ch.expires_at:
             self._store.delete(challenge_id)
             raise OtpExpired("Kod muddati tugagan")
-        ch.attempts += 1
+        # Urinish AVVAL atomik sanaladi (parallel so'rovlar bilan limitni aylanib bo'lmaydi)
+        attempts = self._store.bump_attempts(challenge_id)
+        if attempts is None:
+            raise OtpInvalid("Kod noto'g'ri")
         candidate = code if re.fullmatch(r"[0-9]{6}", code or "") else ""
         if not hmac.compare_digest(ch.code_hash, self._hash(challenge_id, candidate)):
-            if ch.attempts >= self._s.otp_max_attempts:
+            if attempts >= self._s.otp_max_attempts:
                 self._store.delete(challenge_id)
                 raise OtpLocked("Urinishlar tugadi, yangi kod so'rang")
-            raise OtpInvalid("Kod noto'g'ri", attempts_left=self._s.otp_max_attempts - ch.attempts)
-        self._store.delete(challenge_id)
+            raise OtpInvalid("Kod noto'g'ri", attempts_left=self._s.otp_max_attempts - attempts)
+        if not self._store.consume(challenge_id):
+            # Bir vaqtda boshqa so'rov kodni allaqachon ishlatgan: kod bir martalik
+            raise OtpInvalid("Kod noto'g'ri")
         return ch.phone

@@ -1,6 +1,7 @@
 """PostgreSQL ulanishi (psycopg 3 + connection pool) va sxema. psycopg faqat DATABASE_URL berilganda import qilinadi,
 shuning uchun bazasiz ishlatishda (test/dev) o'rnatilgan bo'lishi shart emas."""
 from .errors import ConfigError
+from .migrations import apply_all
 
 # Sxema idempotent (IF NOT EXISTS): har ishga tushishda xavfsiz ishlaydi. Vaqtlar — epoch soniya (float),
 # kodning qolgan qismidagi `clock()` bilan bir xil.
@@ -56,6 +57,7 @@ class Database:
         with self._pool.connection() as conn:
             conn.execute("SELECT pg_advisory_xact_lock(%s)", (_MIGRATION_LOCK,))
             conn.execute(SCHEMA)
+            apply_all(conn)
 
     def close(self) -> None:
         self._pool.close()

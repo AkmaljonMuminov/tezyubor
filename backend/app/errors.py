@@ -75,3 +75,8 @@ class SmsDeliveryError(AppError):
 
     http_status = 502
     code = "SMS_DELIVERY_FAILED"
+
+
+class SessionNotFound(AppError):
+    http_status = 404
+    code = "SESSION_NOT_FOUND"

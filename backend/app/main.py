@@ -10,11 +10,11 @@ from .db import Database
 from .errors import AppError, ConfigError, SmsDeliveryError
 from .modules.auth.audit import AuditLog
 from .modules.auth.otp import OtpService
-from .modules.auth.pg_stores import PgOtpStore, PgRefreshStore, PgUserStore
+from .modules.auth.pg_stores import PgAuditSink, PgOtpStore, PgRefreshStore, PgSessionStore, PgUserStore
 from .modules.auth.router import build_router
 from .modules.auth.service import AuthService
 from .modules.auth.sms_factory import build_sms_sender
-from .modules.auth.stores import MemoryOtpStore, MemoryRefreshStore, MemoryUserStore
+from .modules.auth.stores import MemoryOtpStore, MemoryRefreshStore, MemorySessionStore, MemoryUserStore
 from .modules.auth.tokens import TokenService
 
 
@@ -30,17 +30,19 @@ def create_app(settings: Settings | None = None, sms=None) -> FastAPI:
         db = Database(settings.database_url)
         db.migrate()
         otp_store, refresh_store, user_store = PgOtpStore(db), PgRefreshStore(db), PgUserStore(db)
+        session_store, audit = PgSessionStore(db), AuditLog(sink=PgAuditSink(db))
     else:
         # Xotirada saqlash: server qayta ishga tushsa foydalanuvchilar, PIN va sessiyalar yo'qoladi.
         if not settings.test_mode:
             logging.getLogger("tezyubor").warning("DATABASE_URL yo'q: ma'lumot xotirada, restartda yo'qoladi")
         otp_store, refresh_store, user_store = MemoryOtpStore(), MemoryRefreshStore(), MemoryUserStore()
+        session_store, audit = MemorySessionStore(), AuditLog()
     svc = AuthService(
         settings,
         OtpService(settings, otp_store, sms),
-        TokenService(settings, refresh_store),
+        TokenService(settings, refresh_store, sessions=session_store),
         user_store,
-        AuditLog(),
+        audit,
     )
 
     @asynccontextmanager
