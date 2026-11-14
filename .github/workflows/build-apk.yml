@@ -72,6 +72,23 @@ jobs:
       - name: Launcher ikonkalarini joylash
         run: cp -r launcher_res/. android/app/src/main/res/
 
+      - name: ORVEX PAY — ilova nomi va native splash fon rangi
+        run: |
+          MANIFEST=android/app/src/main/AndroidManifest.xml
+          # Ilova nomi (launcher'da ko'rinadi). applicationId/paket nomi O'ZGARTIRILMAYDI.
+          sed -i 's|android:label="[^"]*"|android:label="ORVEX PAY"|' "$MANIFEST"
+          grep -q 'android:label="ORVEX PAY"' "$MANIFEST" || { echo "::error::android:label 'ORVEX PAY' ga o'zgarmadi"; exit 1; }
+          # Android 12+ splash fon rangi (Midnight Navy); rang @color/orvex_navy launcher_res/values/orvex_colors.xml da
+          for f in android/app/src/main/res/values/styles.xml android/app/src/main/res/values-night/styles.xml; do
+            [ -f "$f" ] || continue
+            grep -q 'windowSplashScreenBackground' "$f" || \
+              sed -i '/<style name="LaunchTheme"/a\        <item name="android:windowSplashScreenBackground">@color/orvex_navy</item>' "$f"
+            grep -q 'windowSplashScreenBackground' "$f" || echo "::warning::$f ga splash fon rangi qo'shilmadi"
+          done
+          echo "--- AndroidManifest.xml (application) ---"; grep -n "android:label\|android:icon\|allowBackup" "$MANIFEST"
+          echo "--- styles.xml ---"; cat android/app/src/main/res/values/styles.xml
+          echo "--- launch_background.xml ---"; cat android/app/src/main/res/drawable/launch_background.xml
+
       - run: flutter pub get
 
       - name: Statik tahlil (natijasi build'ni to'xtatmaydi)
@@ -91,7 +108,17 @@ jobs:
           if [ -n "$API_BASE_URL" ]; then DEFINES="$DEFINES --dart-define=API_BASE_URL=$API_BASE_URL"; fi
           flutter build apk --release $DEFINES
 
+      - name: APK tekshiruvi (paket nomi o'zgarmagan, ilova nomi ORVEX PAY)
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          AAPT=$(find "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools" -name aapt2 | sort -V | tail -n1)
+          if [ -z "$AAPT" ]; then echo "::warning::aapt2 topilmadi — APK metama'lumoti tekshirilmadi"; exit 0; fi
+          "$AAPT" dump badging "$APK" | grep -E "^package:|^application-label:|^launchable-activity" | tee badging.txt
+          grep -q "package: name='uz.tezyubor.app'" badging.txt || { echo "::error::applicationId o'zgargan!"; exit 1; }
+          grep -q "application-label:'ORVEX PAY'" badging.txt || { echo "::error::ilova nomi ORVEX PAY emas"; exit 1; }
+          ls -l "$APK"; sha256sum "$APK"
+
       - uses: actions/upload-artifact@v4
         with:
-          name: tezyubor-apk
+          name: orvex-pay-apk
           path: mobile/build/app/outputs/flutter-apk/app-release.apk
