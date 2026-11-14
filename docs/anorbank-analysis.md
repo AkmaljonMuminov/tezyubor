@@ -104,3 +104,31 @@ ya'ni HTTP inspektori release'ga tushmaydi. `isMinifyEnabled=false` esa release'
 ## 8. Test rejasi
 
 OTP/PIN (blok, eskalatsiya, parallel urinish) · biometrik holatlar (mavjud emas/yozilmagan/vaqtincha/xato/bekor) · token refresh/reuse/revoke/logout · sessiya ro'yxati va boshqa foydalanuvchi sessiyasini o'chira olmaslik · karta qo'shish/o'chirish/noto'g'ri raqam (Luhn, muddat) · o'tkazma + komissiya · takroriy so'rov (idempotentlik) · yetarli mablag' yo'q · begona karta · tarix sahifalash · ruxsatsiz kirish (401) · xavfsizlik regressiyasi (log'da PIN/PAN/token yo'qligi).
+
+## 9. Bajarilgan ishlar va joriy holat (yangilangan: 2026-11-14)
+
+Tekshiruv manbai: GitHub Actions `Backend tests` (PostgreSQL 16 xizmati bilan), run 43548053603 — 228 test o'tgan, shu jumladan PostgreSQL shartnoma testlari (`PostgresWalletContract`, `PostgresContract`) va HTTP testlari (`test_wallet_http`).
+
+| Reja bandi | Holat | Dalil / izoh |
+|---|---|---|
+| 1. Hujjat (shu fayl) | ✅ | commit `docs: AnorBank tahlili…` |
+| 2. Backend auth qotirish: migratsiyalar, sessiyalar, `logout`, `sessions`, `sid` bog'lash | ✅ | A10 yopildi (serverda logout). `tests/test_hardening.py`, `test_wallet_http.SessionHttpTests` |
+| 2. PIN: atomik hisoblagich, eskalatsiya, pepper (A2/A4 ning serverdagi ekvivalenti) | ✅ | parallel 30 ta taxmin — faqat 5 tasi tekshiriladi (`test_parallel_guesses_cannot_exceed_limit`) |
+| 2. OTP challenge persistensiyasi | ✅ | `otp_challenges`, bir martalik iste'mol parallel testda tekshirilgan |
+| 2. Audit: bounded + bazaga yozish | ✅ | `audit_log`; sink xatosi so'rovni buzmaydi |
+| 3. Backend hamyon: kartalar | ✅ sandbox | PAN/CVV saqlanmaydi (A15 yopildi) |
+| 3. O'tkazma: idempotent, serverda summa/komissiya, PIN tasdiq, atomik | ✅ sandbox | A14 yopildi. PostgreSQL'da: 6 parallel o'tkazma balansdan oshmaydi; bir o'tkazma 8 parallel tasdiqda bir marta yechiladi |
+| 3. Tarix/chek | ✅ sandbox | kursor sahifalash (teng vaqtli yozuvlar bilan ham), chek faqat `completed` |
+| 4. Mobil: logout serverga | 🚧 | hali yozilmagan |
+| 4. Mobil: biometrika (PIN zaxira) | 🚧 | hali yozilmagan; qurilmada sinovsiz bo'ladi |
+| 4. Mobil: token yangilash poygasidan himoya (A8) | 🚧 | hali yozilmagan |
+| 4. Mobil hamyonni backendga ulash | ❌ | qilinmagan. Mobil `WalletRepository` ko'p narsani talab qiladi (kommunal to'lovlar, saralanganlar), backendda ular yo'q — alohida reja kerak |
+| 5. Yakuniy audit, PR, hisobot | ⏳ | mobil bosqichdan keyin |
+
+**Haligacha ochiq (halol ro'yxat):**
+- Haqiqiy bank/protsessing, Uzcard/Humo ulanishi — shartnoma va hujjat yo'q. Hamyon faqat sandbox.
+- Komissiya, limit, boshlang'ich sinov balans qiymatlari — o'rinbosar, biznes qarori kerak.
+- Mobil kod bu muhitda yig'ilmaydi; `flutter analyze/test` natijasi faqat GitHub Actions'da ko'rinadi.
+- Qurilmadagi sinov (barmoq izi, haqiqiy Android) umuman bajarilmagan.
+- `work/phase-4-production` bilan birlashtirishda faqat CI fayllari (`.github/workflows/backend-tests.yml`, `build-apk.yml`) to'qnashadi (men `feature/**` triggerini qo'shganman, u CI'ni qayta yozgan); `git merge-tree` bo'yicha README va `docs/` avtomatik birlashadi, lekin matn mazmunini (ikki tomon holat jadvalini) birlashtirgandan keyin ko'zdan kechirish kerak.
+- `Docker Image CI` (GitHub shablon workflow'i) tuzatilmagan (ildizda Dockerfile yo'q); phase-4 branchida u o'chirilgan.

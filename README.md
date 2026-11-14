@@ -2,7 +2,7 @@
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
-## Holat (3-bosqich)
+## Holat (yangilangan: 2026-11-14, branch `feature/anorbank-integration`)
 
 | Qism | Holat |
 |---|---|
@@ -11,18 +11,21 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
 | Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
 | Flutter: monitoring (oylik tushum/xarajat, filtr, kunlar bo'yicha), so'nggi qabul qiluvchilar, kartalar orasida o'tkazma | ⚠️ Yozilgan (mock), ishga tushirib tekshirilmagan |
-| Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Chiqish faqat qurilmadagi tokenlarni o'chiradi, serverda bekor qilish endpointi yo'q |
+| Flutter: profil (maskalangan telefon), balansni yashirish, chiqish | ⚠️ Yozilgan. Mobil chiqish hozircha faqat qurilmadagi tokenlarni o'chiradi. Server endpointi tayyor (`POST /v1/auth/logout`), mobilga ulash — keyingi bosqichda (shu qator o'zgarmaguncha serverda sessiya yopilmaydi) |
 | Flutter: To'lov bo'limi — qidiruv, 20 kategoriya, tanlangan to'lovlar, mobil operatorlar (telefon qatori), kommunal variantlar, elektr uchun hudud + ETK tanlash, xizmat bo'yicha tarix | ⚠️ Yozilgan (mock). Operator/xizmat nomlari faqat ko'rsatish uchun, ular bilan haqiqiy integratsiya yo'q. ETK ro'yxati faqat Samarqand uchun test ma'lumoti, qolgan hududlarda "tez orada"; boshqa kategoriyalar "Tez orada" |
 | Flutter: chek — to'lovdan keyin va tarixdan ochiladi, tafsilotlar (karta maskalangan), matnni nusxalash | ⚠️ Yozilgan. Test rejimida chekda "TEST CHEK — haqiqiy to'lov emas" yozuvi bor. PDF/rasm sifatida ulashish yo'q |
 | Flutter: haqiqiy HTTP klient (`API_MODE=real`) — kirish (haqiqiy SMS kod); hamyon baribir TEST | ⚠️ Yozilgan, klient testlari soxta HTTP bilan. Haqiqiy backend + telefon bilan **birga sinalmagan** |
 | Flutter testlar (`validators`, `wallet`, `http_auth`) | ⚠️ Yozilgan, ishga tushirilmagan (CI'da `flutter test` ishlaydi, natijasi build'ni to'xtatmaydi) |
-| Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ unit testlar o'tgan (CI: Backend tests) |
+| Backend auth yadrosi (OTP, tokenlar, PIN, audit) | ✅ **Qotirilgan** (AnorBank auditidan keyin): serverda logout va sessiyalar ro'yxati; access token sessiyaga bog'langan (bekor qilingan sessiya tokeni darhol o'tmaydi); PIN urinishlari parallel so'rovda ham aylantirib bo'lmaydi, blok har safar 2 baravar uzayadi (15 daq → 24 soat); ixtiyoriy `PIN_PEPPER`; OTP challenge va audit bazada. CI (PostgreSQL 16): 228 test o'tgan |
 | Backend: SMS yuborish (Eskiz.uz) — token, qayta urinish, shablon, sutkalik limit, xatoda limitni qaytarish | ⚠️ Yozilgan, testlar (soxta HTTP bilan). **Haqiqiy Eskiz hisobi bilan jonli sinalmagan** — `python3 -m app.tools.sms_check <telefon>` bilan tekshiring |
 | Backend HTTP qatlami (`router.py`, `main.py`): OTP → tasdiqlash → PIN → token aylanishi, xato formati, productionda `/docs` yopiq | ✅ CI'da haqiqiy FastAPI (`TestClient`) bilan sinalgan, SMS soxta yuboruvchi bilan |
-| Backend: karta, o'tkazma, to'lov, tarix modullari | ❌ Yo'q (hamyon hozircha faqat mobil mock) |
-| Biometrika, PIN tiklash, OTP qayta yuborish, o'tkazmada PIN tasdig'i | ❌ Boshlanmagan |
+| Backend: karta, o'tkazma, tarix, chek | ⚠️ **SANDBOX** bor (`WALLET_ENABLED=true` bilan yoqiladi, standart o'chiq): PAN saqlanmaydi, CVV olinmaydi, summa/komissiyani server hisoblaydi, `Idempotency-Key`, serverda PIN bilan tasdiq, atomik pul harakati + jurnal. CI'da PostgreSQL bilan sinalgan (parallel testlar ham). **Haqiqiy bank yo'q — barcha pul sinov qiymat.** To'lovlar (kommunal/mobil) backendda YO'Q. Mobil hamyon hali ulanmagan (mock) |
+| Biometrika (mobil) | 🚧 Ishlanmoqda (`local_auth`, PIN zaxira bilan). Hali tugamagan va qurilmada sinalmagan |
+| O'tkazmada PIN tasdig'i | ✅ Backendda (sandbox); mobilga ulanmagan |
+| PIN tiklash, OTP qayta yuborish | ❌ Boshlanmagan |
 | Docker (`backend/Dockerfile`), Render (`render.yaml`) | ⚠️ CI'da image yig'iladi va `/health` tekshiriladi; **jonli deploy qilinmagan** |
-| PostgreSQL/Redis, admin panel | ❌ Boshlanmagan. Backend ma'lumoti xotirada: server qayta ishga tushsa foydalanuvchilar va PIN yo'qoladi (qayta SMS bilan kirish kerak) |
+| PostgreSQL | ✅ `DATABASE_URL` bilan: users, refresh_tokens, sms_requests, auth_sessions, otp_challenges, audit_log, cards, transfers, ledger_entries. Versiyalangan migratsiyalar (`schema_migrations`). CI'da PostgreSQL 16 bilan, restartdan keyin ma'lumot saqlanishi ham tekshirilgan. `DATABASE_URL` bo'lmasa — xotira (restartda yo'qoladi) |
+| Redis, admin panel | ❌ Boshlanmagan |
 | APK | ✅ GitHub Actions (`Build APK`), `.github/workflows/build-apk.yml` |
 
 **Mock/test:** `API_MODE=mock` (standart) — OTP kodi `123456`, backendga ulanmaydi; balanslar, kartalar va tarix SOXTA (ilovada "TEST REJIMI" banneri bor).
@@ -30,6 +33,23 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 **Haqiqiy integratsiyalar yo'q:** SMS provayder, bank/protsessing, Uzcard/Humo, to'lov provayderlari — shartnoma va kalit kerak.
 
 **Pul qoidalari (mobil):** summa tiynda `int` (double emas); har operatsiya uchun `Idempotency-Key` (kiritish o'zgarsa yangilanadi, qayta urinishda o'sha); komissiya/chegara serverda ham qayta tekshirilishi shart.
+
+## Yangi API (backend)
+
+| Endpoint | Vazifa |
+|---|---|
+| `POST /v1/auth/logout` | Refresh token egasining qurilma sessiyasini serverda bekor qiladi (noma'lum token ham 204 — taxmin qilib bo'lmaydi) |
+| `GET /v1/auth/sessions`, `DELETE /v1/auth/sessions/{id}` | Faol qurilmalar ro'yxati; o'z sessiyasini uzish (boshqaning sessiyasi — 404) |
+| `GET/POST /v1/wallet/cards`, `DELETE …/{id}`, `POST …/{id}/default` | Sandbox kartalar. Javobda faqat `masked_pan`, `last4`; to'liq PAN va CVV hech qayerda saqlanmaydi |
+| `POST /v1/wallet/receiver/lookup` | Qabul qiluvchi kartasi: maskalangan ism (daqiqada 10 ta urinish limiti — raqamlarni taxmin qilishga qarshi) |
+| `POST /v1/wallet/transfers` (`Idempotency-Key` majburiy) | O'tkazma taklifi: summa/komissiya/jami serverda hisoblanadi; 5 daqiqa ichida tasdiqlanadi |
+| `POST /v1/wallet/transfers/{id}/confirm` `{pin}` | PIN serverda tekshiriladi (blok qoidalari bilan), pul bitta atomik tranzaksiyada o'tadi; takroriy chaqiriq qayta yechmaydi |
+| `POST /v1/wallet/transfers/{id}/cancel`, `GET /v1/wallet/transactions[?limit&cursor&status&direction]`, `GET …/{id}` | Bekor qilish, tarix (kursor sahifalash), chek faqat tasdiqlangan o'tkazma uchun |
+
+Hamyon javoblarida har doim `"sandbox": true`. Hamyon `.env` da `WALLET_ENABLED=true` va `CARD_INDEX_KEY` (>=32 belgi) bilan yoqiladi; komissiya/limit qiymatlari **o'rinbosar** (`TRANSFER_*`, `.env.example` ga qarang) — haqiqiy tarif biznes qarori.
+`PIN_PEPPER` (ixtiyoriy, >=32 belgi) — bazaning o'zi sizib chiqsa ham 4 xonali PIN'ni taxmin qilib bo'lmasligi uchun; keyin yo'qotilsa shu kalit bilan yaratilgan PIN'lar tekshirilmaydi.
+
+Batafsil audit va reja: [`docs/anorbank-analysis.md`](docs/anorbank-analysis.md).
 
 ## Backend
 
