@@ -2,9 +2,7 @@
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
-> **Loyiha yopildi, ammo ish to'xtamaydi.**
-
-## Holat (3-bosqich)
+## Holat (audit snapshot)
 
 | Qism | Holat |
 |---|---|
@@ -24,8 +22,9 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 | Backend: karta, o'tkazma, to'lov, tarix modullari | ❌ Yo'q (hamyon hozircha faqat mobil mock) |
 | Biometrika, PIN tiklash, OTP qayta yuborish, o'tkazmada PIN tasdig'i | ❌ Boshlanmagan |
 | Docker (`backend/Dockerfile`), Render (`render.yaml`) | ⚠️ CI'da image yig'iladi va `/health` tekshiriladi; **jonli deploy qilinmagan** |
-| PostgreSQL/Redis, admin panel | ❌ Boshlanmagan. Backend ma'lumoti xotirada: server qayta ishga tushsa foydalanuvchilar va PIN yo'qoladi (qayta SMS bilan kirish kerak) |
-| APK | ✅ GitHub Actions (`Build APK`), `.github/workflows/build-apk.yml` |
+| PostgreSQL | ⚠️ `psycopg` connection pool va auth uchun `users`, `refresh_tokens`, `sms_requests` bor. `DATABASE_URL` ixtiyoriy; productionda yo'q bo'lsa RAM fallback ishlaydi. Alembic migrations yo'q |
+| Redis, wallet/account/card/transaction backend | ❌ Hali yo‘q. Wallet faqat mobile mock |
+| APK | ⚠️ GitHub Actions Android scaffold yaratib build qiladi; release signing va real qurilmadagi sinov tasdiqlanmagan |
 
 **Mock/test:** `API_MODE=mock` (standart) — OTP kodi `123456`, backendga ulanmaydi; balanslar, kartalar va tarix SOXTA (ilovada "TEST REJIMI" banneri bor).
 `API_MODE=real` — kirish haqiqiy backend (`/v1/auth/*`) va haqiqiy SMS bilan; hamyon (kartalar, balans, to'lov, tarix) esa **baribir SOXTA** va ilovada "TEST HAMYON" banneri hamda "TEST CHEK" yozuvi turadi.
