@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#020A25"/><stop offset=".55" stop-color="#081B5B"/><stop offset="1" stop-color="#102D9B"/></linearGradient>
+<linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFF2A6"/><stop offset=".35" stop-color="#FFCB45"/><stop offset="1" stop-color="#F28A00"/></linearGradient>
+<linearGradient id="silver" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#DCE7FF"/><stop offset="1" stop-color="#A9BEF4"/></linearGradient>
+<linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#11C5FF"/><stop offset=".5" stop-color="#194DFF"/><stop offset="1" stop-color="#FFC247"/></linearGradient>
+<filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<pattern id="lines" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V28" stroke="#FFFFFF" stroke-opacity=".035" stroke-width="2"/></pattern>
+</defs><g fill="none" stroke="url(#gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3"/><path d="m18 5 3 3-3 3"/><path d="M20 16H6l3 3"/><path d="m6 13-3 3 3 3"/></g></svg>
