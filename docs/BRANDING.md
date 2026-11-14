@@ -15,13 +15,17 @@ Shart: **faqat grafika va foydalanuvchiga ko'rinadigan brend matnlari**. Backend
 | Bosh sahifa banneri sarlavha osti | `Tez. Oson. Ishonchli.` | `Tez. Xavfsiz. Qulay.` |
 | Biometrik so'rov matni | `Tezyubor ilovasiga kirish…` | `ORVEX PAY ilovasiga kirish…` |
 | Ilova ichidagi logo (`assets/brand/logo.png`) | eski "T" belgisi | `logo_mark.svg` dan chizilgan 512×512 PNG |
-| Launcher ikonka (barcha zichliklar + adaptive) | "T" | `app_icon.svg` dan: eski (API<26) ikonka va adaptive (fon gradient + halqa/karta, xavfsiz zonaga sig'adi) |
+| Launcher ikonka (barcha zichliklar + adaptive) | "T" | **Foydalanuvchi bergan yangi ikonka** `design/orvex_pay_kit/brand/app_icon_v2.png` (yashil/pushti/oltin, "ORVEX PAY" + shior rasmning o'zida). Eski (API<26): rasm to'liq, burchaklari shaffof. Adaptive: fon = rasmning to'q yashili (`#011402`), foreground = rasm 62% hajmda (doira/skvirkl maskada butun rasm ko'rinadi). Birinchi variant (`app_icon.svg`, ko'k halqa+karta) almashtirildi |
 | Splash (Flutter) | `premium_navy` fon | `assets/brand/splash_bg.svg` (`splash_screen.svg` ning gradient + halqasi; matn va belgi vidjetlarda) |
 | Splash (native, Flutter chizguncha) | oq | `launch_background.xml`: Midnight Navy + `launch_logo.png`; Android 12+ da `windowSplashScreenBackground` |
 | Chekdagi sarlavha | `Tezyubor — chek` | `ORVEX PAY — chek` (`AppBrand.name` dan; mantiq o'zgarmagan) |
 | CI artefakt nomi | `tezyubor-apk` | `orvex-pay-apk` |
 
-Dizayn kiti asl holda `design/orvex_pay_kit/` da (ZIP tarkibi, `approved_icon_preview.png` dan tashqari — pastga qarang). PNG'lar `design/orvex_pay_kit/tools/render_brand_assets.js` bilan SVG'lardan chiziladi (Chromium/Playwright).
+Dizayn kiti asl holda `design/orvex_pay_kit/` da (ZIP tarkibi, `approved_icon_preview.png` dan tashqari — pastga qarang). Ilova ichidagi logo va native splash logotipi `tools/render_brand_assets.js` bilan SVG'dan chiziladi (Chromium/Playwright); launcher ikonkalari `tools/render_launcher_from_png.py` bilan (PIL) yangi ikonka rasmidan yasaladi (rasmning burchaklari qora, shuning uchun skript squircle maska bilan shaffof qiladi).
+
+## Yangi ikonka va ilova ichidagi ranglar (qaror kerak)
+
+Yangi launcher ikonka yashil/pushti/oltin, ilovaning ichi (splash, logotip, tema) esa Midnight Navy/Royal Blue/Cyan. Telefon bosh ekranida ikonka bir xil, ilovani ochgach ranglar boshqacha ko'rinadi. Ikonkadagi matn (ORVEX PAY, shior) 48 px da o'qilmaydi — bu rasmning o'zi, kichik o'lchamda faqat halqa/karta/rang tanib olinadi. Native splash (Android 12+) ikonkani navy fonda ko'rsatadi.
 
 ## Ataylab O'ZGARTIRILMAGAN
 
@@ -44,4 +48,4 @@ Dizayn kiti asl holda `design/orvex_pay_kit/` da (ZIP tarkibi, `approved_icon_pr
 
 ## Tekshiruv
 
-CI (`Build APK`): 1) `flutter analyze`, 2) `flutter test` (shu jumladan `brand_test.dart`), 3) APK yig'iladi, 4) `aapt2 dump badging`: `package: name='uz.tezyubor.app'` va `application-label:'ORVEX PAY'`. Natijalar PR/hisobotda. Qurilmada ko'z bilan tekshirilmagan: ikonka maskalari, native splash.
+CI (`Build APK`): 1) `flutter analyze`, 2) `flutter test` (shu jumladan `brand_test.dart`), 3) APK yig'iladi, 4) `aapt2 dump badging`: `package: name='uz.tezyubor.app'` va `application-label:'ORVEX PAY'`. Natijalar PR/hisobotda. Qurilmada ko'z bilan tekshirilmagan: ikonka maskalari, native splash. Yangi ikonka PNG'lari kompyuterda maskalar (doira, skvirkl, och fon) bilan ko'rib chiqilgan.

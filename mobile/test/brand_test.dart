@@ -55,6 +55,24 @@ void main() {
     expect(File('launcher_res/values/orvex_colors.xml').readAsStringSync(), contains('#06143A'));
   });
 
+  test("launcher PNG o'lchamlari va shaffofligi: eski 48..192 (RGBA), adaptive 108..432 (fon RGB, foreground RGBA)", () {
+    const legacy = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192};
+    const adaptive = {'mdpi': 108, 'hdpi': 162, 'xhdpi': 216, 'xxhdpi': 324, 'xxxhdpi': 432};
+    // PNG IHDR: kenglik [16..20), balandlik [20..24), rang turi [25]: 2 = RGB, 6 = RGBA.
+    void check(String path, int px, int colorType) {
+      final d = ByteData.sublistView(File(path).readAsBytesSync());
+      expect(d.getUint32(16), px, reason: '$path kengligi');
+      expect(d.getUint32(20), px, reason: '$path balandligi');
+      expect(d.getUint8(25), colorType, reason: '$path rang turi');
+    }
+
+    legacy.forEach((dpi, px) => check('launcher_res/mipmap-$dpi/ic_launcher.png', px, 6));
+    adaptive.forEach((dpi, px) {
+      check('launcher_res/mipmap-$dpi/ic_launcher_background.png', px, 2);
+      check('launcher_res/mipmap-$dpi/ic_launcher_foreground.png', px, 6);
+    });
+  });
+
   testWidgets("splash ORVEX PAY nomi va shiorini ko'rsatadi, so'ng PIN/telefon ekraniga o'tadi", (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.0;

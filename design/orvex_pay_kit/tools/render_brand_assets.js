@@ -1,7 +1,9 @@
 // ORVEX PAY: kit SVG'laridan mobil ilova PNG resurslarini chizadi (Chromium/Playwright orqali).
 // Ishlatish: node render_brand_assets.js <kit_papka> <mobile_papka>
-// Chiqadi: mobile/assets/brand/logo.png, mobile/launcher_res/mipmap-*/ic_launcher*.png,
-//          mobile/launcher_res/drawable-nodpi/launch_logo.png
+// Chiqadi: mobile/assets/brand/logo.png, mobile/launcher_res/drawable-nodpi/launch_logo.png
+// DIQQAT: launcher ikonkalari (mipmap-*) endi foydalanuvchi bergan brand/app_icon_v2.png dan yasaladi
+//   (tools/render_launcher_from_png.py). SVG'dan (app_icon.svg) yasash faqat `--launcher-from-svg` bayrog'i bilan,
+//   aks holda bu skript mavjud launcher ikonkalarini ustidan yozmaydi.
 // Nima uchun PNG: logo_mark.svg ichida filtr (glow) bor — flutter_svg filtrni chizmaydi, Chromium chizadi.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -37,6 +39,7 @@ function emblemInner() {
   // 2) Native splash logotipi (nodpi, ~140dp)
   out('launcher_res/drawable-nodpi/launch_logo.png', await shot(img(read('brand/logo_mark.svg'), 384), 384));
 
+  if (process.argv.includes('--launcher-from-svg')) {
   // 3) Eski (API<26) launcher ikonka: app_icon.svg to'liq
   const legacy = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
   for (const [d, px] of Object.entries(legacy)) out(`launcher_res/mipmap-${d}/ic_launcher.png`, await shot(img(read('brand/app_icon.svg'), px), px));
@@ -50,6 +53,7 @@ function emblemInner() {
     const fg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">${defs}<g transform="translate(54 54) scale(${S}) translate(-256 -256)">${body}</g></svg>`;
     out(`launcher_res/mipmap-${d}/ic_launcher_background.png`, await shot(img(bg, px), px, false));
     out(`launcher_res/mipmap-${d}/ic_launcher_foreground.png`, await shot(img(fg, px), px));
+  }
   }
   await browser.close();
 })();
