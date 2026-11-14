@@ -1,4 +1,4 @@
-# Tezyubor — arxitektura (qisqa)
+# ORVEX PAY (kod nomi: Tezyubor) — arxitektura (qisqa)
 
 ## Tarkib
 - `mobile/` — Flutter. `lib/core` (tema, router, brend), `lib/features/<modul>`, `lib/shared`.

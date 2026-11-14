@@ -1,4 +1,6 @@
-# Tezyubor
+# ORVEX PAY
+
+> Brend: **ORVEX PAY** (avval «Tezyubor»; qarang: [`docs/BRANDING.md`](docs/BRANDING.md)). Repozitoriy, paket nomi (`uz.tezyubor.app`) va backend identifikatorlari ataylab o'zgarmagan.
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
@@ -6,7 +8,7 @@ Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL
 
 | Qism | Holat |
 |---|---|
-| Grafikalar: premium kit (navy/royal/oltin, T logotip, 25 ikonka, bannerlar, launcher ikonka) | ✅ Asl kit `design/premium_kit`, ilova uchun tozalangani `mobile/assets` (SVG ichida matn/pattern/filtr yo'q — Flutter chizmaydi). Telefon ekranida ko'rinishi odam ko'zi bilan tekshirilmagan |
+| Grafikalar: **ORVEX PAY** kiti (navy/royal/cyan, logo_mark, 25 ikonka, bannerlar, launcher ikonka, splash) | ✅ Asl kit `design/orvex_pay_kit` (eski Tezyubor kiti `design/premium_kit` arxivda qoldi), ilova uchun tozalangani `mobile/assets` (SVG ichida matn/pattern/filtr yo'q — Flutter chizmaydi). Telefon ekranida ko'rinishi odam ko'zi bilan tekshirilmagan |
 | Flutter: splash, telefon, OTP, PIN yaratish/kirish | ⚠️ Yozilgan, **ishga tushirib tekshirilmagan** |
 | Flutter: bosh sahifa, kartalar, tarix, kartaga o'tkazma, to'lovlar (mobil/kommunal) | ⚠️ Yozilgan (**mock ma'lumot**), ishga tushirib tekshirilmagan |
 | Flutter: pastki navigatsiya (Asosiy, O'tkazmalar, To'lov, Monitoring, Profil) | ⚠️ Yozilgan, ishga tushirib tekshirilmagan |
