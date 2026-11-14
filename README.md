@@ -2,6 +2,8 @@
 
 Mobil to'lov ilovasi (Android/iOS). Texnologiyalar: Flutter, FastAPI, PostgreSQL, Redis, React (admin).
 
+> **Loyiha yopildi, ammo ish to'xtamaydi.**
+
 ## Holat (audit snapshot)
 
 | Qism | Holat |
