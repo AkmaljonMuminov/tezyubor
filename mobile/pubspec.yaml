@@ -1,5 +1,5 @@
 name: tezyubor_mobile
-description: "Tezyubor — mobil to'lov ilovasi (2-bosqich: autentifikatsiya, hamyon, test rejimi)."
+description: "Tezyubor — mobil to'lov ilovasi (autentifikatsiya, hamyon, test rejimi)."
 publish_to: "none"
 version: 0.1.0+1
 
@@ -14,6 +14,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   http: ^1.2.2
   flutter_secure_storage: ^9.2.2
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:

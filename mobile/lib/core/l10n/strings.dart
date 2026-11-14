@@ -20,6 +20,13 @@ class Strings {
   static const pinMismatch = 'PIN-kodlar mos kelmadi, qaytadan urinib ko\'ring';
   static const pinWrong = "PIN-kod noto'g'ri";
   static const genericError = "Xatolik yuz berdi. Qayta urinib ko'ring";
+  static const biometricReason = 'Tezyubor ilovasiga kirish uchun tasdiqlang';
+  static const biometricLogin = 'Barmoq izi bilan kirish';
+  static const biometricSetting = 'Barmoq izi bilan kirish';
+  static const biometricSettingHint = "Faqat ilovani ochish uchun. Pul o'tkazish har doim PIN bilan tasdiqlanadi";
+  static const biometricNotEnrolled = "Qurilmada barmoq izi yozilmagan. Avval telefon sozlamalaridan qo'shing";
+  static const biometricNotSupported = "Bu qurilmada barmoq izi/yuz orqali kirish qo'llab-quvvatlanmaydi";
+  static const biometricFailed = 'Tasdiqlanmadi. PIN-kodni kiriting';
 
   // Bosh sahifa
   static const totalBalance = 'Umumiy balans';

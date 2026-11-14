@@ -33,8 +33,18 @@ abstract class AuthRepository {
   /// Oxirgi kirgan telefon (maskalangan), yo'q bo'lsa `null`.
   Future<String?> maskedPhone();
 
-  /// Qurilmadagi sessiyani tugatadi. Serverda tokenni bekor qilish endpointi hali yo'q.
+  /// Sessiyani tugatadi: serverda refresh tokenni bekor qilishga urinadi (internet bo'lmasa ham davom etadi)
+  /// va qurilmadagi hamma narsani o'chiradi.
   Future<void> logout();
+
+  /// Barmoq izi bilan kirish shu qurilmada yoqilganmi.
+  Future<bool> biometricEnabled();
+  Future<void> setBiometricEnabled(bool value);
+
+  /// Biometrik tasdiqdan KEYIN chaqiriladi: saqlangan refresh token bilan sessiyani yangilaydi (PIN so'ralmaydi).
+  /// Sessiya yaroqsiz/bekor qilingan bo'lsa tokenlar o'chiriladi va [AuthException] (`TOKEN_INVALID`) tashlanadi.
+  /// Eslatma: pul harakati baribir serverda PIN bilan tasdiqlanadi — biometrika uni almashtirmaydi.
+  Future<void> refreshSession();
 }
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {

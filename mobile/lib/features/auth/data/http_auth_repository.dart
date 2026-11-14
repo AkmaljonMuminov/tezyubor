@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/token_store.dart';
 import '../../../core/validators.dart';
@@ -6,10 +8,20 @@ import 'auth_repository.dart';
 /// Haqiqiy backend (`/v1/auth/*`) bilan ishlaydi. Faqat `API_MODE=real` da ishlatiladi.
 /// DIQQAT: backend HTTP qatlami va bu klient birga hali ishga tushirib tekshirilmagan.
 class HttpAuthRepository implements AuthRepository {
-  HttpAuthRepository(this._api, this._tokens);
+  HttpAuthRepository(this._api, this._tokens, {String? deviceLabel}) : _deviceLabel = deviceLabel ?? _defaultLabel();
 
   final ApiClient _api;
   final TokenStore _tokens;
+  final String _deviceLabel;
+
+  /// Serverdagi "Sessiyalar" ro'yxatida ko'rinadi. Qurilma modeli yoki identifikatori YUBORILMAYDI.
+  static String _defaultLabel() {
+    try {
+      return 'Tezyubor (${Platform.operatingSystem})';
+    } catch (_) {
+      return 'Tezyubor';
+    }
+  }
 
   @override
   Future<String> requestOtp(String phone) async {
@@ -27,7 +39,10 @@ class HttpAuthRepository implements AuthRepository {
   @override
   Future<void> verifyOtp({required String challengeId, required String code}) async {
     final res = await _call(
-      () => _api.post('/v1/auth/otp/verify', body: {'challenge_id': challengeId, 'code': code}),
+      () => _api.post(
+        '/v1/auth/otp/verify',
+        body: {'challenge_id': challengeId, 'code': code, 'device_label': _deviceLabel},
+      ),
     );
     await _saveFromResponse(res);
     await _tokens.savePinSet(res?['pin_set'] == true);
@@ -76,10 +91,45 @@ class HttpAuthRepository implements AuthRepository {
   @override
   Future<String?> maskedPhone() => _tokens.readPhone();
 
-  /// Faqat qurilmadagi tokenlarni o'chiradi. Backendda tokenni bekor qilish endpointi yo'q,
-  /// shuning uchun refresh token serverda muddati tugaguncha amal qiladi (keyingi bosqich).
+  /// Serverda sessiyani bekor qiladi (`POST /v1/auth/logout`), keyin — natijadan qat'i nazar — qurilmani tozalaydi.
+  /// Internet bo'lmasa server sessiyasi o'z muddatigacha (yoki "Sessiyalar" orqali uzilguncha) qoladi, lekin qurilmada
+  /// token qolmaydi. Refresh token log'ga yozilmaydi.
   @override
-  Future<void> logout() => _tokens.clear();
+  Future<void> logout() async {
+    final refresh = await _tokens.readRefresh();
+    try {
+      if (refresh != null) {
+        await _api.post('/v1/auth/logout', body: {'refresh_token': refresh});
+      }
+    } on ApiException {
+      // Server javob bermadi: baribir qurilmadan chiqamiz.
+    } finally {
+      await _tokens.clear();
+    }
+  }
+
+  @override
+  Future<bool> biometricEnabled() => _tokens.readBiometricEnabled();
+
+  @override
+  Future<void> setBiometricEnabled(bool value) => _tokens.saveBiometricEnabled(value);
+
+  @override
+  Future<void> refreshSession() async {
+    final refresh = await _tokens.readRefresh();
+    if (refresh == null) {
+      throw const AuthException('TOKEN_INVALID', 'Qaytadan kiring');
+    }
+    try {
+      final res = await _api.post('/v1/auth/token/refresh', body: {'refresh_token': refresh});
+      await _saveFromResponse(res);
+    } on ApiException catch (e) {
+      if (e.code == 'TOKEN_INVALID' || e.code == 'TOKEN_REUSE_DETECTED') {
+        await _tokens.clear();
+      }
+      throw _toAuth(e);
+    }
+  }
 
   // --- ichki ---
 

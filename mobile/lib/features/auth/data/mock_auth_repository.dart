@@ -10,6 +10,7 @@ class MockAuthRepository implements AuthRepository {
   final Map<String, int> _attempts = {};
   String? _pin;
   String? _phone;
+  bool _biometric = false;
 
   @override
   Future<String> requestOtp(String phone) async {
@@ -61,5 +62,19 @@ class MockAuthRepository implements AuthRepository {
 
   /// Mock'da PIN "server holati" hisoblanadi, shuning uchun chiqishda saqlanib qoladi.
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    _biometric = false; // qurilma sozlamasi: chiqishda o'chadi (Http variantidagidek)
+  }
+
+  @override
+  Future<bool> biometricEnabled() async => _biometric;
+
+  @override
+  Future<void> setBiometricEnabled(bool value) async => _biometric = value;
+
+  /// Mock'da sessiya yangilanadigan server yo'q: PIN o'rnatilgan bo'lsa muvaffaqiyatli.
+  @override
+  Future<void> refreshSession() async {
+    if (_pin == null) throw const AuthException('TOKEN_INVALID', 'Qaytadan kiring');
+  }
 }

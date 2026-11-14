@@ -9,6 +9,12 @@ abstract class TokenStore {
   Future<void> savePinSet(bool value);
   Future<String?> readPhone();
   Future<void> savePhone(String maskedPhone);
+
+  /// Barmoq izi bilan kirish yoqilganmi (faqat shu qurilma sozlamasi; serverga yuborilmaydi).
+  Future<bool> readBiometricEnabled();
+  Future<void> saveBiometricEnabled(bool value);
+
+  /// Hamma narsani o'chiradi (tokenlar, PIN belgisi, telefon, biometrik sozlama).
   Future<void> clear();
 }
 
@@ -21,6 +27,7 @@ class SecureTokenStore implements TokenStore {
   static const _kRefresh = 'refresh_token';
   static const _kPinSet = 'pin_set';
   static const _kPhone = 'phone_masked';
+  static const _kBiometric = 'biometric_enabled';
 
   @override
   Future<String?> readRefresh() => _s.read(key: _kRefresh);
@@ -47,11 +54,18 @@ class SecureTokenStore implements TokenStore {
   Future<void> savePhone(String maskedPhone) => _s.write(key: _kPhone, value: maskedPhone);
 
   @override
+  Future<bool> readBiometricEnabled() async => (await _s.read(key: _kBiometric)) == '1';
+
+  @override
+  Future<void> saveBiometricEnabled(bool value) => _s.write(key: _kBiometric, value: value ? '1' : '0');
+
+  @override
   Future<void> clear() async {
     await _s.delete(key: _kAccess);
     await _s.delete(key: _kRefresh);
     await _s.delete(key: _kPinSet);
     await _s.delete(key: _kPhone);
+    await _s.delete(key: _kBiometric);
   }
 }
 
@@ -61,6 +75,7 @@ class MemoryTokenStore implements TokenStore {
   String? _refresh;
   bool _pinSet = false;
   String? _phone;
+  bool _biometric = false;
 
   @override
   Future<String?> readRefresh() async => _refresh;
@@ -87,10 +102,17 @@ class MemoryTokenStore implements TokenStore {
   Future<void> savePhone(String maskedPhone) async => _phone = maskedPhone;
 
   @override
+  Future<bool> readBiometricEnabled() async => _biometric;
+
+  @override
+  Future<void> saveBiometricEnabled(bool value) async => _biometric = value;
+
+  @override
   Future<void> clear() async {
     _access = null;
     _refresh = null;
     _pinSet = false;
     _phone = null;
+    _biometric = false;
   }
 }

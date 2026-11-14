@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/router.dart';
+import '../../core/security/biometric_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/test_mode_banner.dart';
 import '../auth/data/auth_repository.dart';
@@ -14,6 +15,13 @@ import '../wallet/data/wallet_repository.dart';
 final _maskedPhoneProvider = FutureProvider<String?>(
   (ref) => ref.watch(authRepositoryProvider).maskedPhone(),
 );
+
+/// Biometrik holati + shu qurilmada yoqilganmi. Profil ochilganda qayta o'qiladi.
+final _biometricProvider = FutureProvider.autoDispose<({BiometricStatus status, bool enabled})>((ref) async {
+  final status = await ref.watch(biometricServiceProvider).status();
+  final enabled = await ref.watch(authRepositoryProvider).biometricEnabled();
+  return (status: status, enabled: enabled && status == BiometricStatus.available);
+});
 
 /// Profil: maskalangan telefon, sozlamalar, chiqish. Ism va hujjat ma'lumotlari yo'q (identifikatsiya hali qo'shilmagan).
 class ProfileScreen extends ConsumerWidget {
@@ -37,13 +45,26 @@ class ProfileScreen extends ConsumerWidget {
     ref.invalidate(transactionsProvider);
     ref.invalidate(recipientsProvider);
     ref.invalidate(_maskedPhoneProvider);
+    ref.invalidate(_biometricProvider);
     ref.read(balanceHiddenProvider.notifier).state = false;
     if (context.mounted) context.go(Routes.phone);
+  }
+
+  /// Yoqishdan oldin biometrik tasdiq so'raladi (foydalanuvchi haqiqatan ishlata olishini tekshirish uchun).
+  Future<void> _toggleBiometric(BuildContext context, WidgetRef ref, bool value) async {
+    final repo = ref.read(authRepositoryProvider);
+    if (value) {
+      final ok = await ref.read(biometricServiceProvider).authenticate(reason: Strings.biometricReason);
+      if (!ok) return;
+    }
+    await repo.setBiometricEnabled(value);
+    ref.invalidate(_biometricProvider);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final phone = ref.watch(_maskedPhoneProvider).valueOrNull;
+    final bio = ref.watch(_biometricProvider).valueOrNull;
     final hidden = ref.watch(balanceHiddenProvider);
 
     return SafeArea(
@@ -98,6 +119,23 @@ class ProfileScreen extends ConsumerWidget {
                         onChanged: (v) => ref.read(balanceHiddenProvider.notifier).state = v,
                       ),
                       const Divider(height: 1),
+                      if (bio != null && bio.status != BiometricStatus.notSupported && bio.status != BiometricStatus.unavailable) ...[
+                        SwitchListTile(
+                          key: const Key('biometric-switch'),
+                          secondary: const Icon(Icons.fingerprint),
+                          title: const Text(Strings.biometricSetting),
+                          subtitle: Text(
+                            bio.status == BiometricStatus.notEnrolled
+                                ? Strings.biometricNotEnrolled
+                                : Strings.biometricSettingHint,
+                          ),
+                          value: bio.enabled,
+                          onChanged: bio.status == BiometricStatus.available
+                              ? (v) => _toggleBiometric(context, ref, v)
+                              : null,
+                        ),
+                        const Divider(height: 1),
+                      ],
                       const ListTile(
                         leading: Icon(Icons.language),
                         title: Text(Strings.language),
